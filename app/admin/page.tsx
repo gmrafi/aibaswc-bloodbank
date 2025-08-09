@@ -1,16 +1,18 @@
 "use client"
 
 import { SignedIn, SignedOut } from "@clerk/nextjs"
-import PublicLanding from "@/components/public-landing"
+import { SignIn } from "@clerk/nextjs"
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import Dashboard from "@/components/ui-dashboard"
 
-export default function Page() {
+export default function AdminPage() {
   return (
     <>
       <SignedOut>
-        <PublicLanding />
+        <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
+          <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} />
+        </div>
       </SignedOut>
 
       <SignedIn>

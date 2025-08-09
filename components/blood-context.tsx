@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, useRef } from "react"
 
 export type BloodGroup = "O-" | "O+" | "A-" | "A+" | "B-" | "B+" | "AB-" | "AB+"
 
@@ -74,15 +74,38 @@ async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
 
 export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const [state, setState] = useState<State>({ donors: [], requests: [], loading: true })
+  const mountedRef = useRef(false)
 
-  const refresh = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true }))
-    const [donors, requests] = await Promise.all([api<Donor[]>("/api/donors"), api<BloodRequest[]>("/api/requests")])
-    setState({ donors, requests, loading: false })
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  const refresh = useCallback(async (signal?: AbortSignal) => {
+    // Set loading only if still mounted and not aborted
+    if (!signal?.aborted && mountedRef.current) {
+      setState((s) => ({ ...s, loading: true }))
+    }
+
+    try {
+      const [donors, requests] = await Promise.all([api<Donor[]>("/api/donors"), api<BloodRequest[]>("/api/requests")])
+
+      if (signal?.aborted || !mountedRef.current) return
+      setState({ donors, requests, loading: false })
+    } catch (_e) {
+      if (signal?.aborted || !mountedRef.current) return
+      setState((s) => ({ ...s, loading: false }))
+    }
   }, [])
 
   useEffect(() => {
-    refresh().catch(() => setState((s) => ({ ...s, loading: false })))
+    const controller = new AbortController()
+    refresh(controller.signal)
+    return () => {
+      controller.abort()
+    }
   }, [refresh])
 
   const upsertDonor: Ctx["upsertDonor"] = useCallback(
@@ -92,7 +115,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
       } else {
         await api("/api/donors", { method: "POST", body: JSON.stringify(payload) })
       }
-      await refresh()
+      const controller = new AbortController()
+      await refresh(controller.signal)
     },
     [refresh],
   )
@@ -100,7 +124,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const deleteDonor: Ctx["deleteDonor"] = useCallback(
     async (id: string) => {
       await api(`/api/donors/${id}`, { method: "DELETE" })
-      await refresh()
+      const controller = new AbortController()
+      await refresh(controller.signal)
     },
     [refresh],
   )
@@ -108,7 +133,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const addRequest: Ctx["addRequest"] = useCallback(
     async (payload) => {
       await api("/api/requests", { method: "POST", body: JSON.stringify(payload) })
-      await refresh()
+      const controller = new AbortController()
+      await refresh(controller.signal)
     },
     [refresh],
   )
@@ -116,7 +142,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const updateRequest: Ctx["updateRequest"] = useCallback(
     async (req) => {
       await api(`/api/requests/${req.id}`, { method: "PUT", body: JSON.stringify(req) })
-      await refresh()
+      const controller = new AbortController()
+      await refresh(controller.signal)
     },
     [refresh],
   )
@@ -124,7 +151,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const deleteRequest: Ctx["deleteRequest"] = useCallback(
     async (id) => {
       await api(`/api/requests/${id}`, { method: "DELETE" })
-      await refresh()
+      const controller = new AbortController()
+      await refresh(controller.signal)
     },
     [refresh],
   )
@@ -141,7 +169,8 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
           return { ok: false, error: "Invalid file structure" }
         }
         await api("/api/admin/import", { method: "POST", body: JSON.stringify(parsed) })
-        await refresh()
+        const controller = new AbortController()
+        await refresh(controller.signal)
         return { ok: true }
       } catch (e: any) {
         return { ok: false, error: e?.message ?? "Failed to import" }
@@ -153,7 +182,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const value: Ctx = useMemo(
     () => ({
       state,
-      refresh,
+      refresh: () => refresh(), // keep signature for callers
       upsertDonor,
       deleteDonor,
       addRequest,
@@ -172,4 +201,8 @@ export function useBlood() {
   const ctx = useContext(BloodContext)
   if (!ctx) throw new Error("useBlood must be used within BloodProvider")
   return ctx
+}
+
+export function useBloodOptional() {
+  return useContext(BloodContext)
 }

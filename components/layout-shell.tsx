@@ -14,19 +14,20 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { useBlood } from "./blood-context"
+import { useBloodOptional } from "./blood-context"
 import { Menu, Download, Upload, HeartHandshake, Users, ClipboardList, Home } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 export default function LayoutShell({ children }: { children?: React.ReactNode }) {
-  const { exportJSON, importJSON } = useBlood()
+  const blood = useBloodOptional()
   const { toast } = useToast()
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
 
   const handleExport = () => {
-    const data = exportJSON()
+    if (!blood) return
+    const data = blood.exportJSON()
     const blob = new Blob([data], { type: "application/json" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
@@ -37,7 +38,8 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
   }
 
   const handleImport = async () => {
-    const res = await importJSON(fileContent)
+    if (!blood) return
+    const res = await blood.importJSON(fileContent)
     if (res.ok) {
       toast({ title: "Import successful", description: "Database replaced with imported data." })
       setImportOpen(false)
@@ -90,22 +92,24 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2 bg-transparent">
-                  Data
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExport} className="gap-2">
-                  <Download className="size-4" /> Export JSON
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setImportOpen(true)} className="gap-2">
-                  <Upload className="size-4" /> Import JSON
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {blood && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2 bg-transparent">
+                    Data
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExport} className="gap-2">
+                    <Download className="size-4" /> Export JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setImportOpen(true)} className="gap-2">
+                    <Upload className="size-4" /> Import JSON
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
             <SignedOut>
               <SignInButton mode="modal">
                 <Button variant="default">Sign in</Button>
@@ -122,41 +126,43 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
       </main>
 
       {/* Import Sheet */}
-      <Sheet open={importOpen} onOpenChange={setImportOpen}>
-        <SheetContent side="right" className="w-full sm:w-[540px]">
-          <SheetHeader>
-            <SheetTitle>Import from JSON</SheetTitle>
-          </SheetHeader>
-          <div className="mt-4 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Paste the JSON you exported earlier. This will replace donors and requests in the database.
-            </p>
-            <Input
-              type="file"
-              accept="application/json"
-              onChange={async (e) => {
-                const f = e.target.files?.[0]
-                if (f) {
-                  const text = await f.text()
-                  setFileContent(text)
-                }
-              }}
-            />
-            <textarea
-              value={fileContent}
-              onChange={(e) => setFileContent(e.target.value)}
-              className="w-full h-72 border rounded-md p-2 text-sm"
-              placeholder="Paste JSON here..."
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setImportOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleImport}>Import</Button>
+      {blood && (
+        <Sheet open={importOpen} onOpenChange={setImportOpen}>
+          <SheetContent side="right" className="w-full sm:w-[540px]">
+            <SheetHeader>
+              <SheetTitle>Import from JSON</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Paste the JSON you exported earlier. This will replace donors and requests in the database.
+              </p>
+              <Input
+                type="file"
+                accept="application/json"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    const text = await f.text()
+                    setFileContent(text)
+                  }
+                }}
+              />
+              <textarea
+                value={fileContent}
+                onChange={(e) => setFileContent(e.target.value)}
+                className="w-full h-72 border rounded-md p-2 text-sm"
+                placeholder="Paste JSON here..."
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setImportOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleImport}>Import</Button>
+              </div>
             </div>
-          </div>
-        </SheetContent>
-      </Sheet>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   )
 }

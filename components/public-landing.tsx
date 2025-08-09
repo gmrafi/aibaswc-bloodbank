@@ -2,71 +2,39 @@
 
 import type React from "react"
 
-import Image from "next/image"
 import Link from "next/link"
-import PublicHeader from "./public-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { HeartPulse, Users, ClipboardList, ShieldCheck, PhoneCall, CheckCircle2 } from "lucide-react"
+import { HeartPulse, Users, ClipboardList, ShieldCheck, CheckCircle2, PhoneCall, Mail } from "lucide-react"
+import { CLUB } from "@/lib/club-config"
 
 export default function PublicLanding() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <PublicHeader />
 
-      {/* Hero */}
-      <section className="relative">
-        <div className="absolute inset-0">
-          <Image
-            src="/images/hero-blood-donation.png"
-            alt="Students donating blood"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-red-700/50 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-white" />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28">
-          <div className="max-w-3xl text-white">
-            <Badge variant="secondary" className="mb-4 bg-white/90 text-red-700 hover:bg-white">
-              Army IBA Social Welfare Club
-            </Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold leading-tight">Army IBA Social Welfare Club Blood Bank</h1>
-            <p className="mt-4 text-white/90 text-lg">
-              Unite donors across campus. Track requests, match compatible donors instantly, and save lives—together.
-            </p>
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link href="/sign-in">
-                <Button size="lg" className="bg-black hover:bg-black/90">
-                  Admin Sign in
-                </Button>
-              </Link>
-              <a href="#contact">
-                <Button size="lg" variant="outline" className="bg-white/90 text-black hover:bg-white">
-                  Become a Donor
-                </Button>
-              </a>
-            </div>
-          </div>
-
-          {/* Quick stats (static marketing counters) */}
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl">
-            {[
-              { label: "Registered Donors", value: "250+" },
-              { label: "Requests Served", value: "180+" },
-              { label: "Avg. Match Time", value: "< 10m" },
-              { label: "Active Volunteers", value: "30+" },
-            ].map((s) => (
-              <Card key={s.label} className="bg-white/95">
-                <CardContent className="p-4">
-                  <div className="text-2xl font-semibold">{s.value}</div>
-                  <div className="text-sm text-muted-foreground">{s.label}</div>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Hero (no images) */}
+      <section className="bg-gradient-to-b from-red-700 via-red-600 to-red-500 text-white">
+        <div className="mx-auto max-w-7xl px-4 py-16 sm:py-24">
+          <Badge variant="secondary" className="mb-4 bg-white/90 text-red-700 hover:bg-white">
+            {CLUB.shortName}
+          </Badge>
+          <h1 className="text-4xl sm:text-5xl font-bold leading-tight max-w-3xl">{CLUB.name}</h1>
+          <p className="mt-4 text-white/95 text-lg max-w-2xl">
+            Unite donors across campus. Track requests, match compatible donors instantly, and save lives—together.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <Link href="/admin">
+              <Button size="lg" className="bg-black hover:bg-black/90">
+                Go to Admin Portal
+              </Button>
+            </Link>
+            <a href={`mailto:${CLUB.contactEmail}`}>
+              <Button size="lg" variant="outline" className="bg-white/90 text-black hover:bg-white">
+                Contact us
+              </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -82,12 +50,12 @@ export default function PublicLanding() {
           <Feature
             icon={<ClipboardList className="size-5 text-red-600" />}
             title="Request Tracking"
-            desc="Create requests, match compatible donors, mark fulfilled."
+            desc="Create requests, auto-match compatible donors, and mark fulfilled."
           />
           <Feature
             icon={<HeartPulse className="size-5 text-red-600" />}
             title="Smart Matching"
-            desc="ABO/Rh compatibility and eligibility windows built-in."
+            desc="ABO/Rh compatibility and donation eligibility windows built-in."
           />
           <Feature
             icon={<ShieldCheck className="size-5 text-red-600" />}
@@ -102,41 +70,40 @@ export default function PublicLanding() {
         <div className="mx-auto max-w-7xl px-4 py-14">
           <h2 className="text-2xl font-semibold">How it works</h2>
           <div className="mt-6 grid gap-6 sm:grid-cols-3">
-            <Step n={1} title="Register donors">
+            <Step n="1" title="Register donors">
               Add students with blood group and contact details. Eligibility updates automatically.
             </Step>
-            <Step n={2} title="Create requests">
-              For any patient in need, log required units and deadline, then auto-match compatible donors.
+            <Step n="2" title="Create requests">
+              Log required units and deadline, then auto-match compatible donors.
             </Step>
-            <Step n={3} title="Notify & fulfill">
-              Contact selected donors, mark the request fulfilled, and keep records tidy.
+            <Step n="3" title="Notify & fulfill">
+              Contact selected donors, then mark the request fulfilled.
             </Step>
           </div>
         </div>
       </section>
 
-      {/* Contact / Join */}
+      {/* Contact */}
       <section id="contact" className="mx-auto max-w-7xl px-4 py-14">
         <div className="grid gap-6 lg:grid-cols-3">
           <Card className="lg:col-span-2">
             <CardContent className="p-6">
-              <h3 className="text-xl font-semibold">Join as a donor</h3>
+              <h3 className="text-xl font-semibold">Get in touch</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Interested in becoming a donor? Reach our volunteer team to be added to the donor pool.
+                Email us to join as a donor or for any blood request coordination.
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                <a href="tel:+8801000000000">
+                <a href={`mailto:${CLUB.contactEmail}`}>
                   <Button className="gap-2">
-                    <PhoneCall className="size-4" />
-                    Call a Volunteer
+                    <Mail className="size-4" />
+                    {CLUB.contactEmail}
                   </Button>
                 </a>
-                <a
-                  href="https://wa.me/00000000000?text=I%20want%20to%20become%20a%20donor%20at%20Army%20IBA%20SWC%20Blood%20Bank"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Button variant="outline">Message on WhatsApp</Button>
+                <a href={`tel:${CLUB.contactPhone}`}>
+                  <Button variant="outline" className="gap-2 bg-transparent">
+                    <PhoneCall className="size-4" />
+                    {CLUB.contactPhone}
+                  </Button>
                 </a>
               </div>
             </CardContent>
@@ -144,12 +111,10 @@ export default function PublicLanding() {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-xl font-semibold">Admin access</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Club coordinators can sign in to manage donors and requests.
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Club coordinators can manage donors and requests.</p>
               <div className="mt-4">
-                <Link href="/sign-in">
-                  <Button className="w-full">Admin Sign in</Button>
+                <Link href="/admin">
+                  <Button className="w-full">Open Admin Portal</Button>
                 </Link>
               </div>
               <ul className="mt-4 space-y-2 text-sm">
@@ -168,10 +133,17 @@ export default function PublicLanding() {
       </section>
 
       <footer className="border-t py-8 text-center text-xs text-muted-foreground">
-        <p>© {new Date().getFullYear()} Army IBA Social Welfare Club. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} {CLUB.name}. All rights reserved.
+        </p>
       </footer>
     </div>
   )
+}
+
+function PublicHeader() {
+  // Inline lightweight header for the landing page
+  return null
 }
 
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
@@ -188,7 +160,7 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
   )
 }
 
-function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function Step({ n, title, children }: { n: string; title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-lg border bg-white p-6">
       <div className="flex items-center gap-3">

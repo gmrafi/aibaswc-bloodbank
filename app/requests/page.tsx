@@ -1,17 +1,31 @@
-import AppClient from "@/components/app-client"
+"use client"
+
+import { SignedIn, SignedOut } from "@clerk/nextjs"
+import { SignIn } from "@clerk/nextjs"
+import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import RequestTable from "@/components/request-table"
 
 export default function Page() {
   return (
-    <AppClient>
-      <LayoutShell>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-semibold">Requests</h1>
-          <p className="text-sm text-muted-foreground">Track blood requests and find compatible donors.</p>
-          <RequestTable />
+    <>
+      <SignedOut>
+        <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
+          <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} />
         </div>
-      </LayoutShell>
-    </AppClient>
+      </SignedOut>
+
+      <SignedIn>
+        <AppProviders>
+          <LayoutShell>
+            <div className="space-y-3">
+              <h1 className="text-2xl font-semibold">Requests</h1>
+              <p className="text-sm text-muted-foreground">Track blood requests and find compatible donors.</p>
+              <RequestTable />
+            </div>
+          </LayoutShell>
+        </AppProviders>
+      </SignedIn>
+    </>
   )
 }
