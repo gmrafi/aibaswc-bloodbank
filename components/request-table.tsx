@@ -7,7 +7,7 @@ import { isCompatible, isEligible } from "@/lib/compatibility"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import RequestForm from "./request-form"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -27,8 +27,10 @@ export default function RequestTable() {
         !q ||
         r.patientName.toLowerCase().includes(q) ||
         r.location.toLowerCase().includes(q) ||
+        (r.hospital ?? "").toLowerCase().includes(q) ||
         r.contactPerson.toLowerCase().includes(q) ||
-        r.contactPhone.toLowerCase().includes(q)
+        r.contactPhone.toLowerCase().includes(q) ||
+        (r.contactPhone2 ?? "").toLowerCase().includes(q)
       const matchesS = status === "all" ? true : r.status === status
       return matchesQ && matchesS
     })
@@ -36,19 +38,6 @@ export default function RequestTable() {
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<BloodRequest | null>(null)
-  const [newOpen, setNewOpen] = useState(false)
-
-  const matchesFor = (r: BloodRequest) => {
-    const donors = state.donors
-      .filter((d) => d.willing)
-      .filter((d) => isCompatible(d.bloodGroup as any, r.bloodGroup))
-      .map((d) => ({
-        donor: d,
-        eligible: isEligible(d.lastDonation ?? null, d.willing),
-      }))
-      .sort((a, b) => Number(b.eligible) - Number(a.eligible))
-    return donors
-  }
 
   const copyPhones = (donors: Donor[]) => {
     const phones = donors.map((d) => d.phone).join(", ")
@@ -58,10 +47,31 @@ export default function RequestTable() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Inline create form */}
+      <div className="rounded-lg border bg-white p-4">
+        <h2 className="text-lg font-semibold mb-2">Create a Request</h2>
+        <RequestForm
+          onCancel={() => {}}
+          onSubmit={async (data) => {
+            try {
+              await addRequest(data as any)
+              toast({ title: "Request created" })
+            } catch (e: any) {
+              toast({
+                title: "Failed to create request",
+                description: e?.message ?? "Unknown error",
+                variant: "destructive",
+              })
+            }
+          }}
+        />
+      </div>
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
         <Input
-          placeholder="Search patient, location, contact..."
+          placeholder="Search patient, location, hospital, contact..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
@@ -77,35 +87,10 @@ export default function RequestTable() {
             <option value="fulfilled">Fulfilled</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <Dialog open={newOpen} onOpenChange={setNewOpen}>
-            <DialogTrigger asChild>
-              <Button>New Request</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create Blood Request</DialogTitle>
-              </DialogHeader>
-              <RequestForm
-                onCancel={() => setNewOpen(false)}
-                onSubmit={async (data) => {
-                  try {
-                    await addRequest(data)
-                    toast({ title: "Request created" })
-                    setNewOpen(false)
-                  } catch (e: any) {
-                    toast({
-                      title: "Failed to create request",
-                      description: e?.message ?? "Unknown error",
-                      variant: "destructive",
-                    })
-                  }
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
+      {/* Table */}
       <div className="rounded-md border bg-white overflow-auto">
         <Table>
           <TableHeader>
@@ -113,8 +98,9 @@ export default function RequestTable() {
               <TableHead>Patient</TableHead>
               <TableHead>Group</TableHead>
               <TableHead>Units</TableHead>
+              <TableHead>Urgency</TableHead>
               <TableHead>Needed By</TableHead>
-              <TableHead>Location</TableHead>
+              <TableHead>Hospital</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -131,11 +117,18 @@ export default function RequestTable() {
                   <Badge variant="secondary">{r.bloodGroup}</Badge>
                 </TableCell>
                 <TableCell>{r.units}</TableCell>
+                <TableCell className="capitalize">{r.urgency}</TableCell>
                 <TableCell>{r.neededBy}</TableCell>
-                <TableCell>{r.location}</TableCell>
                 <TableCell className="min-w-[160px]">
+                  <div className="text-sm">{r.hospital ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">{r.ward ?? ""}</div>
+                </TableCell>
+                <TableCell className="min-w-[180px]">
                   <div className="text-sm">{r.contactPerson}</div>
-                  <div className="text-xs text-muted-foreground">{r.contactPhone}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {r.contactPhone}
+                    {r.contactPhone2 ? `, ${r.contactPhone2}` : ""}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {r.status === "open" && <Badge className="bg-amber-500 hover:bg-amber-500">Open</Badge>}
@@ -166,34 +159,13 @@ export default function RequestTable() {
                             try {
                               const updated = { ...r, status: "cancelled" as const }
                               await updateRequest(updated)
-                              toast({ title: "Request cancelled" })
-                            } catch (e: any) {
-                              toast({
-                                title: "Failed to cancel request",
-                                description: e?.message ?? "Unknown error",
-                                variant: "destructive",
-                              })
-                            }
+                            } catch {}
                           }}
                         >
                           Cancel
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem
-                        className="gap-2 text-red-600"
-                        onClick={async () => {
-                          try {
-                            await deleteRequest(r.id)
-                            toast({ title: "Request deleted" })
-                          } catch (e: any) {
-                            toast({
-                              title: "Failed to delete request",
-                              description: e?.message ?? "Unknown error",
-                              variant: "destructive",
-                            })
-                          }
-                        }}
-                      >
+                      <DropdownMenuItem className="gap-2 text-red-600" onClick={() => deleteRequest(r.id)}>
                         <Trash2 className="size-4" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -203,7 +175,7 @@ export default function RequestTable() {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No requests found.
                 </TableCell>
               </TableRow>
@@ -212,6 +184,7 @@ export default function RequestTable() {
         </Table>
       </div>
 
+      {/* Details dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -222,19 +195,11 @@ export default function RequestTable() {
               request={view}
               donors={state.donors}
               onClose={() => setOpen(false)}
-              onSave={async (updated) => {
-                try {
-                  await updateRequest(updated)
-                  setView(updated)
-                } catch (e: any) {
-                  toast({
-                    title: "Failed to update request",
-                    description: e?.message ?? "Unknown error",
-                    variant: "destructive",
-                  })
-                }
+              onSave={async (updated) => updateRequest(updated)}
+              onCopyPhones={(d) => {
+                const phones = d.map((x) => x.phone).join(", ")
+                navigator.clipboard.writeText(phones)
               }}
-              onCopyPhones={(d) => copyPhones(d)}
             />
           )}
         </DialogContent>
@@ -278,19 +243,21 @@ function RequestDetails({
         <div className="rounded-md border p-3 bg-white">
           <div className="font-medium mb-2">{request.patientName}</div>
           <div className="text-sm text-muted-foreground">
-            {"Blood Group: "}
+            {"Group: "}
             {request.bloodGroup} {" • Units: "}
-            {request.units}
+            {request.units} {" • Urgency: "}
+            {request.urgency}
           </div>
           <div className="text-sm text-muted-foreground">
             {"Needed By: "}
-            {request.neededBy} {" • Location: "}
-            {request.location}
+            {request.neededBy} {" • Hospital: "}
+            {request.hospital ?? "—"} {request.ward ? `(${request.ward})` : ""}
           </div>
           <div className="text-sm text-muted-foreground">
             {"Contact: "}
             {request.contactPerson} {" ("}
             {request.contactPhone}
+            {request.contactPhone2 ? `, ${request.contactPhone2}` : ""}
             {")"}
           </div>
           {request.notes && <div className="text-sm mt-2">{request.notes}</div>}
@@ -306,6 +273,7 @@ function RequestDetails({
                   <span>
                     {d.name} {" • "}
                     {d.phone}
+                    {d.phone2 ? `, ${d.phone2}` : ""}
                   </span>
                   <span className="text-xs text-muted-foreground">{d.bloodGroup}</span>
                 </div>
@@ -326,7 +294,7 @@ function RequestDetails({
             <TableRow>
               <TableHead>Donor</TableHead>
               <TableHead>Group</TableHead>
-              <TableHead>Contact</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Last Donation</TableHead>
               <TableHead>Eligible</TableHead>
               <TableHead className="text-right">Select</TableHead>
@@ -337,14 +305,16 @@ function RequestDetails({
               <TableRow key={donor.id}>
                 <TableCell className="min-w-[180px]">
                   <div className="font-medium">{donor.name}</div>
-                  <div className="text-xs text-muted-foreground">{donor.department}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {donor.department} • Batch {donor.batch}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant="secondary">{donor.bloodGroup}</Badge>
                 </TableCell>
                 <TableCell className="min-w-[160px]">
                   <div className="text-sm">{donor.phone}</div>
-                  <div className="text-xs text-muted-foreground">{donor.email ?? ""}</div>
+                  <div className="text-xs text-muted-foreground">{donor.phone2 ?? ""}</div>
                 </TableCell>
                 <TableCell>{donor.lastDonation ? donor.lastDonation.slice(0, 10) : "—"}</TableCell>
                 <TableCell>
@@ -386,32 +356,17 @@ function RequestDetails({
         <Button variant="outline" onClick={onClose}>
           Close
         </Button>
-        <Button
-          onClick={async () => {
-            try {
-              const updated: BloodRequest = { ...request, matchedDonorIds: selected }
-              await onSave(updated as any)
-              // Optional toast here if you pass toast into RequestDetails via props
-            } catch (e) {
-              // no-op; parent already shows toasts
-            }
-          }}
-        >
-          Save selection
-        </Button>
+        <Button onClick={() => onSave({ ...request, matchedDonorIds: selected })}>Save selection</Button>
         <Button
           variant="secondary"
-          onClick={async () => {
-            try {
-              const updated: BloodRequest = {
-                ...request,
-                status: "fulfilled",
-                fulfilledAt: new Date().toISOString(),
-                matchedDonorIds: selected,
-              }
-              await onSave(updated as any)
-            } catch (e) {}
-          }}
+          onClick={() =>
+            onSave({
+              ...request,
+              status: "fulfilled",
+              fulfilledAt: new Date().toISOString(),
+              matchedDonorIds: selected,
+            })
+          }
         >
           Mark fulfilled
         </Button>

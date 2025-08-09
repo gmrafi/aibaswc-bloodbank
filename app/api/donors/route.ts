@@ -2,15 +2,16 @@ import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getUserIdSafe } from "@/lib/auth/safe-auth"
 
-// Map DB row to client type
 function mapRow(r: any) {
   return {
     id: r.id,
     name: r.name,
+    batch: r.batch ?? "",
     studentId: r.student_id,
     department: r.department,
     bloodGroup: r.blood_group,
     phone: r.phone,
+    phone2: r.phone2 ?? undefined,
     email: r.email ?? undefined,
     contactPreference: r.contact_preference ?? undefined,
     willing: r.willing,
@@ -22,9 +23,7 @@ function mapRow(r: any) {
 }
 
 export async function GET() {
-  // Do not throw if middleware isn't running (preview). In production, userId will be present.
   await getUserIdSafe()
-
   const supabase = getSupabaseServer()
   const { data, error } = await supabase.from("donors").select("*").order("created_at", { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -32,21 +31,20 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  // Optional: enforce auth when available (no-throw fallback in preview)
   const userId = await getUserIdSafe()
-  // If you want to block unauthenticated writes in production, uncomment:
   // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
   const payload = await req.json()
   const supabase = getSupabaseServer()
   const { data, error } = await supabase
     .from("donors")
     .insert({
       name: payload.name,
+      batch: payload.batch ?? null,
       student_id: payload.studentId,
       department: payload.department,
       blood_group: payload.bloodGroup,
       phone: payload.phone,
+      phone2: payload.phone2 ?? null,
       email: payload.email ?? null,
       contact_preference: payload.contactPreference ?? null,
       willing: payload.willing ?? true,

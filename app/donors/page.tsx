@@ -1,12 +1,11 @@
 "use client"
 
-import { SignedIn, SignedOut } from "@clerk/nextjs"
-import { SignIn } from "@clerk/nextjs"
+import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs"
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import DonorTable from "@/components/donor-table"
 
-export default function Page() {
+export default function DonorsPage() {
   return (
     <>
       <SignedOut>
@@ -20,9 +19,7 @@ export default function Page() {
           <LayoutShell>
             <div className="space-y-3">
               <h1 className="text-2xl font-semibold">Donors</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage the list of student donors. Filter by blood group, department, and eligibility.
-              </p>
+              <p className="text-sm text-muted-foreground">Add students and manage donor records.</p>
               <DonorTable />
             </div>
           </LayoutShell>

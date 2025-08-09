@@ -1,6 +1,21 @@
 "use client"
 
-import { SignedIn, SignedOut, SignIn, UserProfile } from "@clerk/nextjs"
+import { useEffect, useState } from "react"
+import { SignedIn, SignedOut, SignIn, UserProfile, useUser } from "@clerk/nextjs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
+import { Button } from "@/components/ui/button"
+
+type CampusProfile = {
+  batch?: string
+  department?: string
+  phone1?: string
+  phone2?: string
+  bloodGroup?: BloodGroup
+}
 
 export default function ProfilePage() {
   return (
@@ -12,19 +27,121 @@ export default function ProfilePage() {
       </SignedOut>
       <SignedIn>
         <div className="min-h-screen bg-white">
-          <div className="mx-auto max-w-5xl p-4 sm:p-8">
-            <h1 className="text-2xl font-semibold mb-4">Your Profile</h1>
-            <div className="rounded-lg border bg-white p-2 sm:p-4">
-              <UserProfile
-                appearance={{
-                  variables: { colorPrimary: "#111111" },
-                  elements: { card: "shadow-none border-0", formButtonPrimary: "bg-black hover:bg-black/90" },
-                }}
-              />
-            </div>
+          <div className="mx-auto max-w-6xl p-4 sm:p-8 grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Profile</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 sm:p-4">
+                <UserProfile
+                  appearance={{
+                    elements: { card: "shadow-none border-0", formButtonPrimary: "bg-black hover:bg-black/90" },
+                  }}
+                />
+              </CardContent>
+            </Card>
+
+            <CampusProfileCard />
           </div>
         </div>
       </SignedIn>
     </>
+  )
+}
+
+function CampusProfileCard() {
+  const { user } = useUser()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [data, setData] = useState<CampusProfile>({})
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const res = await fetch("/api/profile")
+        const json = await res.json()
+        if (active) setData(json ?? {})
+      } catch {}
+      if (active) setLoading(false)
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const save = async () => {
+    setSaving(true)
+    await fetch("/api/profile", { method: "PUT", body: JSON.stringify(data) })
+    setSaving(false)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Campus Profile</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="batch">Batch</Label>
+            <Input
+              id="batch"
+              value={data.batch ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, batch: e.target.value }))}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="department">Department</Label>
+            <Input
+              id="department"
+              value={data.department ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, department: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="phone1">Phone 1</Label>
+            <Input
+              id="phone1"
+              value={data.phone1 ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, phone1: e.target.value }))}
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="phone2">Phone 2</Label>
+            <Input
+              id="phone2"
+              value={data.phone2 ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, phone2: e.target.value }))}
+            />
+          </div>
+        </div>
+        <div className="grid gap-1.5">
+          <Label>Blood Group</Label>
+          <Select
+            value={data.bloodGroup ?? ""}
+            onValueChange={(v) => setData((d) => ({ ...d, bloodGroup: v as BloodGroup }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select blood group" />
+            </SelectTrigger>
+            <SelectContent>
+              {BLOOD_GROUPS.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={saving || loading}>
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

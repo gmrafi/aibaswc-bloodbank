@@ -19,10 +19,12 @@ type Props = {
 export default function DonorForm(props: Props) {
   const donor = props.donor ?? null
   const [name, setName] = useState(donor?.name ?? "")
+  const [batch, setBatch] = useState(donor?.batch ?? "")
   const [studentId, setStudentId] = useState(donor?.studentId ?? "")
   const [department, setDepartment] = useState(donor?.department ?? "")
   const [bloodGroup, setBloodGroup] = useState<BloodGroup>((donor?.bloodGroup as BloodGroup) ?? "O+")
   const [phone, setPhone] = useState(donor?.phone ?? "")
+  const [phone2, setPhone2] = useState(donor?.phone2 ?? "")
   const [email, setEmail] = useState(donor?.email ?? "")
   const [contactPreference, setContactPreference] = useState<"Phone" | "WhatsApp" | "Email">(
     donor?.contactPreference ?? "Phone",
@@ -32,24 +34,25 @@ export default function DonorForm(props: Props) {
   const [notes, setNotes] = useState(donor?.notes ?? "")
 
   useEffect(() => {
-    // Sync if donor prop changes
     if (donor) {
       setName(donor.name)
+      setBatch(donor.batch)
       setStudentId(donor.studentId)
       setDepartment(donor.department)
       setBloodGroup(donor.bloodGroup)
       setPhone(donor.phone)
+      setPhone2(donor.phone2 ?? "")
       setEmail(donor.email ?? "")
       setContactPreference(donor.contactPreference ?? "Phone")
       setWilling(donor.willing)
       setLastDonation(donor.lastDonation ? donor.lastDonation.slice(0, 10) : "")
       setNotes(donor.notes ?? "")
     }
-  }, [donor]) // Updated dependency array to include the entire donor object
+  }, [donor])
 
   const canSubmit = useMemo(() => {
-    return name.trim() && studentId.trim() && department.trim() && phone.trim()
-  }, [name, studentId, department, phone])
+    return name.trim() && batch.trim() && studentId.trim() && department.trim() && phone.trim()
+  }, [name, batch, studentId, department, phone])
 
   return (
     <form
@@ -61,10 +64,12 @@ export default function DonorForm(props: Props) {
           id: donor?.id,
           createdAt: donor?.createdAt,
           name: name.trim(),
+          batch: batch.trim(),
           studentId: studentId.trim(),
           department: department.trim(),
           bloodGroup,
           phone: phone.trim(),
+          phone2: phone2.trim() || undefined,
           email: email.trim() || undefined,
           contactPreference,
           willing,
@@ -73,10 +78,14 @@ export default function DonorForm(props: Props) {
         })
       }}
     >
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="name">Full Name</Label>
           <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Aisha Khan" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="batch">Batch</Label>
+          <Input id="batch" value={batch} onChange={(e) => setBatch(e.target.value)} placeholder="e.g., 23rd" />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="studentId">Student ID</Label>
@@ -84,19 +93,14 @@ export default function DonorForm(props: Props) {
             id="studentId"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value)}
-            placeholder="e.g., U2021-001"
+            placeholder="U2021-001"
           />
         </div>
       </div>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="department">Department</Label>
-          <Input
-            id="department"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            placeholder="e.g., Computer Science"
-          />
+          <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="CSE" />
         </div>
         <div className="grid gap-1.5">
           <Label>Blood Group</Label>
@@ -113,11 +117,24 @@ export default function DonorForm(props: Props) {
             </SelectContent>
           </Select>
         </div>
-      </div>
-      <div className="grid md:grid-cols-2 gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor="phone">Phone</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 555-0101" />
+          <Label htmlFor="lastDonation">Last Donation (optional)</Label>
+          <Input id="lastDonation" type="date" value={lastDonation} onChange={(e) => setLastDonation(e.target.value)} />
+        </div>
+      </div>
+      <div className="grid md:grid-cols-3 gap-3">
+        <div className="grid gap-1.5">
+          <Label htmlFor="phone">Phone 1</Label>
+          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 01XXXXXXXXX" />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="phone2">Phone 2 (optional)</Label>
+          <Input
+            id="phone2"
+            value={phone2}
+            onChange={(e) => setPhone2(e.target.value)}
+            placeholder="e.g., 01XXXXXXXXX"
+          />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="email">Email (optional)</Label>
@@ -126,11 +143,11 @@ export default function DonorForm(props: Props) {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="e.g., name@univ.edu"
+            placeholder="name@univ.edu"
           />
         </div>
       </div>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label>Contact Preference</Label>
           <Select value={contactPreference} onValueChange={(v) => setContactPreference(v as any)}>
@@ -144,14 +161,10 @@ export default function DonorForm(props: Props) {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-1.5">
-          <Label htmlFor="lastDonation">Last Donation (optional)</Label>
-          <Input id="lastDonation" type="date" value={lastDonation} onChange={(e) => setLastDonation(e.target.value)} />
+        <div className="flex items-center gap-3">
+          <Switch id="willing" checked={willing} onCheckedChange={setWilling} />
+          <Label htmlFor="willing">Willing to donate</Label>
         </div>
-      </div>
-      <div className="flex items-center gap-3">
-        <Switch id="willing" checked={willing} onCheckedChange={setWilling} />
-        <Label htmlFor="willing">Willing to donate</Label>
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="notes">Notes (optional)</Label>

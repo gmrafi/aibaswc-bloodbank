@@ -8,10 +8,12 @@ export type BloodGroup = "O-" | "O+" | "A-" | "A+" | "B-" | "B+" | "AB-" | "AB+"
 export type Donor = {
   id: string
   name: string
+  batch: string
   studentId: string
   department: string
   bloodGroup: BloodGroup
   phone: string
+  phone2?: string
   email?: string
   contactPreference?: "Phone" | "WhatsApp" | "Email"
   willing: boolean
@@ -27,9 +29,15 @@ export type BloodRequest = {
   bloodGroup: BloodGroup
   units: number
   neededBy: string // YYYY-MM-DD
+  hospital?: string
+  ward?: string
   location: string
   contactPerson: string
   contactPhone: string
+  contactPhone2?: string
+  requestedBy?: string
+  relationToPatient?: string
+  urgency: "low" | "normal" | "high" | "critical"
   notes?: string
   status: "open" | "fulfilled" | "cancelled"
   createdAt: string
@@ -84,14 +92,11 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   }, [])
 
   const refresh = useCallback(async (signal?: AbortSignal) => {
-    // Set loading only if still mounted and not aborted
     if (!signal?.aborted && mountedRef.current) {
       setState((s) => ({ ...s, loading: true }))
     }
-
     try {
       const [donors, requests] = await Promise.all([api<Donor[]>("/api/donors"), api<BloodRequest[]>("/api/requests")])
-
       if (signal?.aborted || !mountedRef.current) return
       setState({ donors, requests, loading: false })
     } catch (_e) {
@@ -103,9 +108,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   useEffect(() => {
     const controller = new AbortController()
     refresh(controller.signal)
-    return () => {
-      controller.abort()
-    }
+    return () => controller.abort()
   }, [refresh])
 
   const upsertDonor: Ctx["upsertDonor"] = useCallback(
@@ -157,9 +160,10 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
     [refresh],
   )
 
-  const exportJSON = useCallback(() => {
-    return JSON.stringify({ donors: state.donors, requests: state.requests }, null, 2)
-  }, [state.donors, state.requests])
+  const exportJSON = useCallback(
+    () => JSON.stringify({ donors: state.donors, requests: state.requests }, null, 2),
+    [state.donors, state.requests],
+  )
 
   const importJSON = useCallback(
     async (json: string) => {
@@ -182,7 +186,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const value: Ctx = useMemo(
     () => ({
       state,
-      refresh: () => refresh(), // keep signature for callers
+      refresh: () => refresh(),
       upsertDonor,
       deleteDonor,
       addRequest,

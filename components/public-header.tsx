@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Menu, HeartHandshake } from "lucide-react"
+import { Menu, HeartHandshake, Users, ClipboardList } from "lucide-react"
 import { CLUB } from "@/lib/club-config"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
@@ -25,16 +25,38 @@ export default function PublicHeader() {
               <SheetTitle>{CLUB.shortName}</SheetTitle>
             </SheetHeader>
             <nav className="mt-4 grid gap-1">
-              <a href="#features" className="px-2 py-2 rounded-md hover:bg-muted/60">
+              <a href="#features" className="px-2 py-2 rounded-md hover:bg-muted/60" onClick={() => setOpen(false)}>
                 Features
               </a>
-              <a href="#how" className="px-2 py-2 rounded-md hover:bg-muted/60">
+              <a href="#how" className="px-2 py-2 rounded-md hover:bg-muted/60" onClick={() => setOpen(false)}>
                 How it works
               </a>
-              <a href="#contact" className="px-2 py-2 rounded-md hover:bg-muted/60">
+              <a href="#contact" className="px-2 py-2 rounded-md hover:bg-muted/60" onClick={() => setOpen(false)}>
                 Contact
               </a>
-              <Link href="/admin" className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium">
+              {/* Direct links to admin sections; unauth users will be redirected to sign-in */}
+              <Link
+                href="/donors"
+                prefetch={false}
+                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <Users className="size-4 mr-2" /> Donors
+              </Link>
+              <Link
+                href="/requests"
+                prefetch={false}
+                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <ClipboardList className="size-4 mr-2" /> Requests
+              </Link>
+              <Link
+                href="/admin"
+                prefetch={false}
+                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium"
+                onClick={() => setOpen(false)}
+              >
                 Admin Portal
               </Link>
             </nav>
@@ -47,17 +69,38 @@ export default function PublicHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 ml-6">
-          <a href="#features" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
+          <a href="#features" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
             Features
           </a>
-          <a href="#how" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
+          <a href="#how" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
             How it works
           </a>
-          <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
+          <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
             Contact
           </a>
-          <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
+          <Link
+            href="/profile"
+            prefetch={false}
+            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm"
+            onClick={() => setOpen(false)}
+          >
             Profile
+          </Link>
+          <Link
+            href="/donors"
+            prefetch={false}
+            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
+            onClick={() => setOpen(false)}
+          >
+            <Users className="size-4 mr-2" /> Donors
+          </Link>
+          <Link
+            href="/requests"
+            prefetch={false}
+            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
+            onClick={() => setOpen(false)}
+          >
+            <ClipboardList className="size-4 mr-2" /> Requests
           </Link>
         </nav>
 
@@ -70,7 +113,7 @@ export default function PublicHeader() {
           <SignedIn>
             <UserButton />
           </SignedIn>
-          <Link href="/admin">
+          <Link href="/admin" prefetch={false} onClick={() => setOpen(false)}>
             <Button className="bg-black hover:bg-black/90">Admin Portal</Button>
           </Link>
         </div>

@@ -7,7 +7,7 @@ import { isEligible } from "@/lib/compatibility"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DonorForm from "./donor-form"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -22,6 +22,7 @@ export default function DonorTable() {
   const [group, setGroup] = useState<string>("all")
   const [availability, setAvailability] = useState<string>("all")
   const [department, setDepartment] = useState<string>("all")
+  const { toast } = useToast()
 
   const departments = useMemo(() => {
     const set = new Set(state.donors.map((d) => d.department).filter(Boolean))
@@ -36,6 +37,7 @@ export default function DonorTable() {
         d.name.toLowerCase().includes(q) ||
         d.studentId.toLowerCase().includes(q) ||
         d.phone.toLowerCase().includes(q) ||
+        (d.phone2 ?? "").toLowerCase().includes(q) ||
         (d.email ?? "").toLowerCase().includes(q)
       const matchesGroup = group === "all" || d.bloodGroup === group
       const eligible = isEligible(d.lastDonation ?? null, d.willing)
@@ -46,14 +48,36 @@ export default function DonorTable() {
   }, [state.donors, query, group, availability, department])
 
   const [editing, setEditing] = useState<Donor | null>(null)
-  const [open, setOpen] = useState(false)
-  const { toast } = useToast()
+  const [editOpen, setEditOpen] = useState(false)
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Inline Add Form */}
+      <div className="rounded-lg border bg-white p-4">
+        <h2 className="text-lg font-semibold mb-2">Add a Donor</h2>
+        <DonorForm
+          onCancel={() => {
+            // clear handled inside form by user
+          }}
+          onSubmit={async (data) => {
+            try {
+              await upsertDonor(data as any)
+              toast({ title: "Donor added" })
+            } catch (e: any) {
+              toast({
+                title: "Failed to add donor",
+                description: e?.message ?? "Unknown error",
+                variant: "destructive",
+              })
+            }
+          }}
+        />
+      </div>
+
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
         <Input
-          placeholder="Search name, student ID, phone, email..."
+          placeholder="Search name, ID, phone, email..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="max-w-md"
@@ -94,47 +118,16 @@ export default function DonorTable() {
               ))}
             </SelectContent>
           </Select>
-          <Dialog
-            open={open}
-            onOpenChange={(o) => {
-              setOpen(o)
-              if (!o) setEditing(null)
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>Add Donor</Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{editing ? "Edit Donor" : "Add Donor"}</DialogTitle>
-              </DialogHeader>
-              <DonorForm
-                donor={editing}
-                onCancel={() => setOpen(false)}
-                onSubmit={async (data) => {
-                  try {
-                    await upsertDonor(data)
-                    toast({ title: editing ? "Donor updated" : "Donor added" })
-                    setOpen(false)
-                  } catch (e: any) {
-                    toast({
-                      title: "Failed to save donor",
-                      description: e?.message ?? "Unknown error",
-                      variant: "destructive",
-                    })
-                  }
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
 
+      {/* Table */}
       <div className="rounded-md border bg-white overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Batch</TableHead>
               <TableHead className="whitespace-nowrap">Student ID</TableHead>
               <TableHead>Department</TableHead>
               <TableHead className="whitespace-nowrap">Blood Group</TableHead>
@@ -153,13 +146,15 @@ export default function DonorTable() {
                     <div className="font-medium">{d.name}</div>
                     <div className="text-xs text-muted-foreground">{d.email ?? ""}</div>
                   </TableCell>
+                  <TableCell>{d.batch}</TableCell>
                   <TableCell>{d.studentId}</TableCell>
                   <TableCell>{d.department}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{d.bloodGroup}</Badge>
                   </TableCell>
-                  <TableCell className="min-w-[180px]">
+                  <TableCell className="min-w-[200px]">
                     <div>{d.phone}</div>
+                    <div>{d.phone2 ?? ""}</div>
                     <div className="text-xs text-muted-foreground">{d.contactPreference ?? ""}</div>
                   </TableCell>
                   <TableCell>{d.lastDonation ? d.lastDonation.slice(0, 10) : "—"}</TableCell>
@@ -182,7 +177,7 @@ export default function DonorTable() {
                           className="gap-2"
                           onClick={() => {
                             setEditing(d)
-                            setOpen(true)
+                            setEditOpen(true)
                           }}
                         >
                           <Pencil className="size-4" /> Edit
@@ -192,14 +187,7 @@ export default function DonorTable() {
                           onClick={async () => {
                             try {
                               await deleteDonor(d.id)
-                              toast({ title: "Donor deleted" })
-                            } catch (e: any) {
-                              toast({
-                                title: "Failed to delete donor",
-                                description: e?.message ?? "Unknown error",
-                                variant: "destructive",
-                              })
-                            }
+                            } catch {}
                           }}
                         >
                           <Trash2 className="size-4" /> Delete
@@ -212,7 +200,7 @@ export default function DonorTable() {
             })}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No donors found.
                 </TableCell>
               </TableRow>
@@ -220,6 +208,25 @@ export default function DonorTable() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Donor</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <DonorForm
+              donor={editing}
+              onCancel={() => setEditOpen(false)}
+              onSubmit={async (data) => {
+                await upsertDonor(data)
+                setEditOpen(false)
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

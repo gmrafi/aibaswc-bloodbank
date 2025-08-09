@@ -9,9 +9,15 @@ function mapRow(r: any) {
     bloodGroup: r.blood_group,
     units: r.units,
     neededBy: r.needed_by,
+    hospital: r.hospital ?? undefined,
+    ward: r.ward ?? undefined,
     location: r.location,
     contactPerson: r.contact_person,
     contactPhone: r.contact_phone,
+    contactPhone2: r.contact_phone2 ?? undefined,
+    requestedBy: r.requested_by ?? undefined,
+    relationToPatient: r.relation_to_patient ?? undefined,
+    urgency: (r.urgency ?? "normal") as "low" | "normal" | "high" | "critical",
     notes: r.notes ?? undefined,
     status: r.status,
     createdAt: new Date(r.created_at).toISOString(),
@@ -22,7 +28,6 @@ function mapRow(r: any) {
 
 export async function GET() {
   await getUserIdSafe()
-
   const supabase = getSupabaseServer()
   const { data, error } = await supabase.from("requests").select("*").order("created_at", { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -32,7 +37,6 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = await getUserIdSafe()
   // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
   const payload = await req.json()
   const supabase = getSupabaseServer()
   const { data, error } = await supabase
@@ -42,9 +46,15 @@ export async function POST(req: Request) {
       blood_group: payload.bloodGroup,
       units: payload.units,
       needed_by: payload.neededBy,
+      hospital: payload.hospital ?? null,
+      ward: payload.ward ?? null,
       location: payload.location,
       contact_person: payload.contactPerson,
       contact_phone: payload.contactPhone,
+      contact_phone2: payload.contactPhone2 ?? null,
+      requested_by: payload.requestedBy ?? null,
+      relation_to_patient: payload.relationToPatient ?? null,
+      urgency: payload.urgency ?? "normal",
       notes: payload.notes ?? null,
       status: "open",
       matched_donor_ids: payload.matchedDonorIds ?? [],

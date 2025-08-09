@@ -24,6 +24,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
   const { toast } = useToast()
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
+  const [navOpen, setNavOpen] = useState(false)
 
   const handleExport = () => {
     if (!blood) return
@@ -53,9 +54,9 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
     <div className="min-h-screen flex flex-col">
       <header className="border-b bg-white sticky top-0 z-10">
         <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
-          <Sheet>
+          <Sheet open={navOpen} onOpenChange={setNavOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open navigation">
                 <Menu className="size-5" />
               </Button>
             </SheetTrigger>
@@ -66,24 +67,27 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
               <nav className="mt-4 grid gap-1">
                 <Link
                   href="/"
-                  onClick={() => setImportOpen(false)}
-                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
                 >
-                  <Home className="size-4" /> Dashboard
+                  <Home className="size-4 mr-2" /> Dashboard
                 </Link>
                 <Link
                   href="/donors"
-                  onClick={() => setImportOpen(false)}
-                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
                 >
-                  <Users className="size-4" /> Donors
+                  <Users className="size-4 mr-2" /> Donors
                 </Link>
                 <Link
                   href="/requests"
-                  onClick={() => setImportOpen(false)}
-                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
                 >
-                  <ClipboardList className="size-4" /> Requests
+                  <ClipboardList className="size-4 mr-2" /> Requests
                 </Link>
               </nav>
             </SheetContent>
@@ -137,7 +141,6 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
         <div className="mx-auto max-w-7xl p-4">{children}</div>
       </main>
 
-      {/* Import Sheet */}
       {blood && (
         <Sheet open={importOpen} onOpenChange={setImportOpen}>
           <SheetContent side="right" className="w-full sm:w-[540px]">

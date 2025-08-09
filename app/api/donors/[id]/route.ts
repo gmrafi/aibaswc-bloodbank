@@ -5,17 +5,18 @@ import { getUserIdSafe } from "@/lib/auth/safe-auth"
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   const userId = await getUserIdSafe()
   // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
   const payload = await req.json()
   const supabase = getSupabaseServer()
   const { data, error } = await supabase
     .from("donors")
     .update({
       name: payload.name,
+      batch: payload.batch ?? null,
       student_id: payload.studentId,
       department: payload.department,
       blood_group: payload.bloodGroup,
       phone: payload.phone,
+      phone2: payload.phone2 ?? null,
       email: payload.email ?? null,
       contact_preference: payload.contactPreference ?? null,
       willing: payload.willing ?? true,
@@ -30,10 +31,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   return NextResponse.json({
     id: data.id,
     name: data.name,
+    batch: data.batch ?? "",
     studentId: data.student_id,
     department: data.department,
     bloodGroup: data.blood_group,
     phone: data.phone,
+    phone2: data.phone2 ?? undefined,
     email: data.email ?? undefined,
     contactPreference: data.contact_preference ?? undefined,
     willing: data.willing,
@@ -47,7 +50,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   const userId = await getUserIdSafe()
   // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-
   const supabase = getSupabaseServer()
   const { error } = await supabase.from("donors").delete().eq("id", params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
