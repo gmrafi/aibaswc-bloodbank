@@ -3,11 +3,12 @@ import { getSupabaseServer } from "@/lib/supabase/server"
 import { getUserIdSafe } from "@/lib/auth/safe-auth"
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const userId = await getUserIdSafe()
-  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await getUserIdSafe()
   const payload = await req.json()
   const supabase = getSupabaseServer()
-  const { data, error } = await supabase
+
+  // Attempt with extended columns
+  const attempt1 = await supabase
     .from("donors")
     .update({
       name: payload.name,
@@ -27,29 +28,72 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     .eq("id", params.id)
     .select("*")
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  if (!attempt1.error && attempt1.data) {
+    const d = attempt1.data
+    return NextResponse.json({
+      id: d.id,
+      name: d.name,
+      batch: d.batch ?? "",
+      studentId: d.student_id,
+      department: d.department,
+      bloodGroup: d.blood_group,
+      phone: d.phone,
+      phone2: d.phone2 ?? undefined,
+      email: d.email ?? undefined,
+      contactPreference: d.contact_preference ?? undefined,
+      willing: d.willing,
+      lastDonation: d.last_donation ? new Date(d.last_donation).toISOString() : null,
+      notes: d.notes ?? undefined,
+      createdAt: new Date(d.created_at).toISOString(),
+      updatedAt: d.updated_at ? new Date(d.updated_at).toISOString() : undefined,
+    })
+  }
+
+  // Fallback for older schema without batch/phone2
+  const attempt2 = await supabase
+    .from("donors")
+    .update({
+      name: payload.name,
+      student_id: payload.studentId,
+      department: payload.department,
+      blood_group: payload.bloodGroup,
+      phone: payload.phone,
+      email: payload.email ?? null,
+      contact_preference: payload.contactPreference ?? null,
+      willing: payload.willing ?? true,
+      last_donation: payload.lastDonation ?? null,
+      notes: payload.notes ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.id)
+    .select("*")
+    .single()
+
+  if (attempt2.error) return NextResponse.json({ error: attempt2.error.message }, { status: 500 })
+
+  const d = attempt2.data
   return NextResponse.json({
-    id: data.id,
-    name: data.name,
-    batch: data.batch ?? "",
-    studentId: data.student_id,
-    department: data.department,
-    bloodGroup: data.blood_group,
-    phone: data.phone,
-    phone2: data.phone2 ?? undefined,
-    email: data.email ?? undefined,
-    contactPreference: data.contact_preference ?? undefined,
-    willing: data.willing,
-    lastDonation: data.last_donation ? new Date(data.last_donation).toISOString() : null,
-    notes: data.notes ?? undefined,
-    createdAt: new Date(data.created_at).toISOString(),
-    updatedAt: data.updated_at ? new Date(data.updated_at).toISOString() : undefined,
+    id: d.id,
+    name: d.name,
+    batch: d.batch ?? "",
+    studentId: d.student_id,
+    department: d.department,
+    bloodGroup: d.blood_group,
+    phone: d.phone,
+    phone2: d.phone2 ?? undefined,
+    email: d.email ?? undefined,
+    contactPreference: d.contact_preference ?? undefined,
+    willing: d.willing,
+    lastDonation: d.last_donation ? new Date(d.last_donation).toISOString() : null,
+    notes: d.notes ?? undefined,
+    createdAt: new Date(d.created_at).toISOString(),
+    updatedAt: d.updated_at ? new Date(d.updated_at).toISOString() : undefined,
   })
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const userId = await getUserIdSafe()
-  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await getUserIdSafe()
   const supabase = getSupabaseServer()
   const { error } = await supabase.from("donors").delete().eq("id", params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

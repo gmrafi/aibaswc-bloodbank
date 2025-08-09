@@ -12,7 +12,7 @@ import type { Donor } from "./blood-context"
 
 type Props = {
   donor?: Donor | null
-  onSubmit?: (data: Omit<Donor, "id" | "createdAt"> & Partial<Pick<Donor, "id" | "createdAt">>) => void
+  onSubmit?: (data: Omit<Donor, "id" | "createdAt"> & Partial<Pick<Donor, "id" | "createdAt">>) => Promise<void> | void
   onCancel?: () => void
 }
 
@@ -32,6 +32,8 @@ export default function DonorForm(props: Props) {
   const [willing, setWilling] = useState(donor?.willing ?? true)
   const [lastDonation, setLastDonation] = useState(donor?.lastDonation ? donor.lastDonation.slice(0, 10) : "")
   const [notes, setNotes] = useState(donor?.notes ?? "")
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (donor) {
@@ -51,37 +53,53 @@ export default function DonorForm(props: Props) {
   }, [donor])
 
   const canSubmit = useMemo(() => {
-    return name.trim() && batch.trim() && studentId.trim() && department.trim() && phone.trim()
-  }, [name, batch, studentId, department, phone])
+    return name.trim() && studentId.trim() && department.trim() && phone.trim()
+  }, [name, studentId, department, phone])
 
   return (
     <form
       className="grid gap-3"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
-        if (!canSubmit) return
-        props.onSubmit?.({
-          id: donor?.id,
-          createdAt: donor?.createdAt,
-          name: name.trim(),
-          batch: batch.trim(),
-          studentId: studentId.trim(),
-          department: department.trim(),
-          bloodGroup,
-          phone: phone.trim(),
-          phone2: phone2.trim() || undefined,
-          email: email.trim() || undefined,
-          contactPreference,
-          willing,
-          lastDonation: lastDonation ? new Date(lastDonation).toISOString() : null,
-          notes: notes.trim() || undefined,
-        })
+        setError(null)
+        if (!canSubmit) {
+          setError("Please fill name, student ID, department, and phone.")
+          return
+        }
+        try {
+          setSubmitting(true)
+          await props.onSubmit?.({
+            id: donor?.id,
+            createdAt: donor?.createdAt,
+            name: name.trim(),
+            batch: batch.trim(),
+            studentId: studentId.trim(),
+            department: department.trim(),
+            bloodGroup,
+            phone: phone.trim(),
+            phone2: phone2.trim() || undefined,
+            email: email.trim() || undefined,
+            contactPreference,
+            willing,
+            lastDonation: lastDonation ? new Date(lastDonation).toISOString() : null,
+            notes: notes.trim() || undefined,
+          })
+        } catch (e: any) {
+          setError(e?.message ?? "Failed to save donor")
+        } finally {
+          setSubmitting(false)
+        }
       }}
     >
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm" role="alert">
+          {error}
+        </div>
+      )}
       <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="name">Full Name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g., Aisha Khan" />
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="Aisha Khan" />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="batch">Batch</Label>
@@ -89,18 +107,13 @@ export default function DonorForm(props: Props) {
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="studentId">Student ID</Label>
-          <Input
-            id="studentId"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            placeholder="U2021-001"
-          />
+          <Input id="studentId" value={studentId} onChange={(e) => setStudentId(e.target.value)} required />
         </div>
       </div>
       <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="department">Department</Label>
-          <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} placeholder="CSE" />
+          <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required />
         </div>
         <div className="grid gap-1.5">
           <Label>Blood Group</Label>
@@ -125,26 +138,15 @@ export default function DonorForm(props: Props) {
       <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="phone">Phone 1</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="e.g., 01XXXXXXXXX" />
+          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="phone2">Phone 2 (optional)</Label>
-          <Input
-            id="phone2"
-            value={phone2}
-            onChange={(e) => setPhone2(e.target.value)}
-            placeholder="e.g., 01XXXXXXXXX"
-          />
+          <Input id="phone2" value={phone2} onChange={(e) => setPhone2(e.target.value)} />
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="email">Email (optional)</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@univ.edu"
-          />
+          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
       </div>
       <div className="grid md:grid-cols-3 gap-3">
@@ -168,19 +170,14 @@ export default function DonorForm(props: Props) {
       </div>
       <div className="grid gap-1.5">
         <Label htmlFor="notes">Notes (optional)</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Availability, conditions, etc."
-        />
+        <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
       </div>
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={props.onCancel}>
+        <Button type="button" variant="outline" onClick={props.onCancel} disabled={submitting}>
           Cancel
         </Button>
-        <Button type="submit" disabled={!canSubmit}>
-          {donor ? "Save changes" : "Add donor"}
+        <Button type="submit" disabled={!canSubmit || submitting}>
+          {submitting ? "Saving..." : donor ? "Save changes" : "Add donor"}
         </Button>
       </div>
     </form>
@@ -189,6 +186,6 @@ export default function DonorForm(props: Props) {
 
 DonorForm.defaultProps = {
   donor: null,
-  onSubmit: () => {},
+  onSubmit: async () => {},
   onCancel: () => {},
 }

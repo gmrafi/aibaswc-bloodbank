@@ -31,11 +31,12 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const userId = await getUserIdSafe()
-  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await getUserIdSafe() // optional auth
   const payload = await req.json()
   const supabase = getSupabaseServer()
-  const { data, error } = await supabase
+
+  // Attempt with extended columns first
+  const attempt1 = await supabase
     .from("donors")
     .insert({
       name: payload.name,
@@ -53,6 +54,27 @@ export async function POST(req: Request) {
     })
     .select("*")
     .single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(mapRow(data))
+
+  if (!attempt1.error && attempt1.data) return NextResponse.json(mapRow(attempt1.data))
+
+  // Fallback for older schema without batch/phone2
+  const attempt2 = await supabase
+    .from("donors")
+    .insert({
+      name: payload.name,
+      student_id: payload.studentId,
+      department: payload.department,
+      blood_group: payload.bloodGroup,
+      phone: payload.phone,
+      email: payload.email ?? null,
+      contact_preference: payload.contactPreference ?? null,
+      willing: payload.willing ?? true,
+      last_donation: payload.lastDonation ?? null,
+      notes: payload.notes ?? null,
+    })
+    .select("*")
+    .single()
+
+  if (attempt2.error) return NextResponse.json({ error: attempt2.error.message }, { status: 500 })
+  return NextResponse.json(mapRow(attempt2.data))
 }

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
 
 type CampusProfile = {
   batch?: string
@@ -40,7 +41,6 @@ export default function ProfilePage() {
                 />
               </CardContent>
             </Card>
-
             <CampusProfileCard />
           </div>
         </div>
@@ -51,6 +51,7 @@ export default function ProfilePage() {
 
 function CampusProfileCard() {
   const { user } = useUser()
+  const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [data, setData] = useState<CampusProfile>({})
@@ -62,23 +63,45 @@ function CampusProfileCard() {
         const res = await fetch("/api/profile")
         const json = await res.json()
         if (active) setData(json ?? {})
-      } catch {}
-      if (active) setLoading(false)
+      } catch {
+      } finally {
+        if (active) setLoading(false)
+      }
     })()
     return () => {
       active = false
     }
   }, [])
 
+  const syncFromAccount = () => {
+    const primaryEmail = user?.primaryEmailAddress?.emailAddress
+    const phoneNumber = user?.primaryPhoneNumber?.phoneNumber
+    setData((d) => ({
+      ...d,
+      phone1: d.phone1 || phoneNumber || "",
+      // bloodGroup not in Clerk profile; left as-is
+    }))
+  }
+
   const save = async () => {
-    setSaving(true)
-    await fetch("/api/profile", { method: "PUT", body: JSON.stringify(data) })
-    setSaving(false)
+    try {
+      setSaving(true)
+      const res = await fetch("/api/profile", { method: "PUT", body: JSON.stringify(data) })
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || "Failed")
+      }
+      toast({ title: "Saved", description: "Campus profile updated." })
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e?.message ?? "Unknown error", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex items-center justify-between">
         <CardTitle>Campus Profile</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -89,6 +112,7 @@ function CampusProfileCard() {
               id="batch"
               value={data.batch ?? ""}
               onChange={(e) => setData((d) => ({ ...d, batch: e.target.value }))}
+              disabled={loading}
             />
           </div>
           <div className="grid gap-1.5">
@@ -97,6 +121,7 @@ function CampusProfileCard() {
               id="department"
               value={data.department ?? ""}
               onChange={(e) => setData((d) => ({ ...d, department: e.target.value }))}
+              disabled={loading}
             />
           </div>
         </div>
@@ -107,6 +132,7 @@ function CampusProfileCard() {
               id="phone1"
               value={data.phone1 ?? ""}
               onChange={(e) => setData((d) => ({ ...d, phone1: e.target.value }))}
+              disabled={loading}
             />
           </div>
           <div className="grid gap-1.5">
@@ -115,6 +141,7 @@ function CampusProfileCard() {
               id="phone2"
               value={data.phone2 ?? ""}
               onChange={(e) => setData((d) => ({ ...d, phone2: e.target.value }))}
+              disabled={loading}
             />
           </div>
         </div>
@@ -123,6 +150,7 @@ function CampusProfileCard() {
           <Select
             value={data.bloodGroup ?? ""}
             onValueChange={(v) => setData((d) => ({ ...d, bloodGroup: v as BloodGroup }))}
+            disabled={loading}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select blood group" />
@@ -136,7 +164,10 @@ function CampusProfileCard() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex justify-end">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={syncFromAccount} disabled={loading || saving}>
+            Sync from account
+          </Button>
           <Button onClick={save} disabled={saving || loading}>
             {saving ? "Saving..." : "Save"}
           </Button>
