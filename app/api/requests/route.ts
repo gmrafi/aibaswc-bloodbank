@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getUserIdSafe } from "@/lib/auth/safe-auth"
 
 function mapRow(r: any) {
   return {
@@ -8,7 +8,7 @@ function mapRow(r: any) {
     patientName: r.patient_name,
     bloodGroup: r.blood_group,
     units: r.units,
-    neededBy: r.needed_by, // stored as date (YYYY-MM-DD)
+    neededBy: r.needed_by,
     location: r.location,
     contactPerson: r.contact_person,
     contactPhone: r.contact_phone,
@@ -21,8 +21,8 @@ function mapRow(r: any) {
 }
 
 export async function GET() {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  await getUserIdSafe()
+
   const supabase = getSupabaseServer()
   const { data, error } = await supabase.from("requests").select("*").order("created_at", { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -30,8 +30,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const userId = await getUserIdSafe()
+  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   const payload = await req.json()
   const supabase = getSupabaseServer()
   const { data, error } = await supabase

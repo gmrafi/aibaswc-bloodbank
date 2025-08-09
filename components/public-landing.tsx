@@ -1,8 +1,9 @@
 "use client"
 
-import type React from "react"
-
 import Link from "next/link"
+
+import type React from "react"
+import PublicHeader from "@/components/public-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -139,11 +140,6 @@ export default function PublicLanding() {
       </footer>
     </div>
   )
-}
-
-function PublicHeader() {
-  // Inline lightweight header for the landing page
-  return null
 }
 
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {

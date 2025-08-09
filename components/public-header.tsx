@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Menu, HeartHandshake } from "lucide-react"
 import { CLUB } from "@/lib/club-config"
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 export default function PublicHeader() {
   const [open, setOpen] = useState(false)
@@ -13,12 +14,10 @@ export default function PublicHeader() {
   return (
     <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
       <div className="mx-auto max-w-7xl px-4 py-3 flex items-center gap-3">
-        {/* Mobile nav */}
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open navigation">
               <Menu className="size-5" />
-              <span className="sr-only">Open navigation</span>
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64">
@@ -42,13 +41,11 @@ export default function PublicHeader() {
           </SheetContent>
         </Sheet>
 
-        {/* Brand */}
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <HeartHandshake className="size-5 text-red-600" />
           <span>{CLUB.name}</span>
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 ml-6">
           <a href="#features" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             Features
@@ -59,9 +56,20 @@ export default function PublicHeader() {
           <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             Contact
           </a>
+          <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
+            Profile
+          </Link>
         </nav>
 
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <Button variant="default">Sign in</Button>
+            </SignInButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
           <Link href="/admin">
             <Button className="bg-black hover:bg-black/90">Admin Portal</Button>
           </Link>

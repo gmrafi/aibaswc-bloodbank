@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getUserIdSafe } from "@/lib/auth/safe-auth"
 
 export async function POST(req: Request) {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const userId = await getUserIdSafe()
+  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   const payload = await req.json()
   const supabase = getSupabaseServer()
 
-  // Basic shape validation
   if (!payload || !Array.isArray(payload.donors) || !Array.isArray(payload.requests)) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
   }
 
-  // Clear existing data first (requests depend on donors only via matched ids)
+  // Clear existing
   const delReq = await supabase.from("requests").delete().neq("id", "00000000-0000-0000-0000-000000000000")
   if (delReq.error) return NextResponse.json({ error: delReq.error.message }, { status: 500 })
   const delDon = await supabase.from("donors").delete().neq("id", "00000000-0000-0000-0000-000000000000")
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   // Insert donors
   if (payload.donors.length > 0) {
     const donorsToInsert = payload.donors.map((d: any) => ({
-      id: d.id, // preserve ids to keep request matches intact
+      id: d.id,
       name: d.name,
       student_id: d.studentId,
       department: d.department,

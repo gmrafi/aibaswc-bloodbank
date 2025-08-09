@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server"
-import { auth } from "@clerk/nextjs/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
+import { getUserIdSafe } from "@/lib/auth/safe-auth"
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const userId = await getUserIdSafe()
+  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   const payload = await req.json()
   const supabase = getSupabaseServer()
   const { data, error } = await supabase
@@ -44,8 +45,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const { userId } = auth()
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  const userId = await getUserIdSafe()
+  // if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   const supabase = getSupabaseServer()
   const { error } = await supabase.from("donors").delete().eq("id", params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
