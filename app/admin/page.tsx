@@ -5,6 +5,7 @@ import { SignIn } from "@clerk/nextjs"
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import Dashboard from "@/components/ui-dashboard"
+import RoleGuard from "@/components/role-guard"
 
 export default function AdminPage() {
   return (
@@ -18,7 +19,9 @@ export default function AdminPage() {
       <SignedIn>
         <AppProviders>
           <LayoutShell>
-            <Dashboard />
+            <RoleGuard allowed={["admin", "superadmin"]}>
+              <Dashboard />
+            </RoleGuard>
           </LayoutShell>
         </AppProviders>
       </SignedIn>

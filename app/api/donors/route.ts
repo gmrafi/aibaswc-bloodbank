@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getUserIdSafe } from "@/lib/auth/safe-auth"
+import { getUserRoleServer, isAdminLike } from "@/lib/auth/roles"
 
 function mapRow(r: any) {
   return {
@@ -31,11 +32,12 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  await getUserIdSafe() // optional auth
+  const { role } = await getUserRoleServer()
+  if (!isAdminLike(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
   const payload = await req.json()
   const supabase = getSupabaseServer()
 
-  // Attempt with extended columns first
   const attempt1 = await supabase
     .from("donors")
     .insert({
@@ -57,7 +59,6 @@ export async function POST(req: Request) {
 
   if (!attempt1.error && attempt1.data) return NextResponse.json(mapRow(attempt1.data))
 
-  // Fallback for older schema without batch/phone2
   const attempt2 = await supabase
     .from("donors")
     .insert({

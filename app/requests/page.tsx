@@ -4,8 +4,9 @@ import { SignedIn, SignedOut, SignIn } from "@clerk/nextjs"
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import RequestTable from "@/components/request-table"
+import RoleGuard from "@/components/role-guard"
 
-export default function RequestsPage() {
+export default function Page() {
   return (
     <>
       <SignedOut>
@@ -17,11 +18,13 @@ export default function RequestsPage() {
       <SignedIn>
         <AppProviders>
           <LayoutShell>
-            <div className="space-y-3">
-              <h1 className="text-2xl font-semibold">Requests</h1>
-              <p className="text-sm text-muted-foreground">Create and track blood requests, match donors, and close.</p>
-              <RequestTable />
-            </div>
+            <RoleGuard allowed={["admin", "superadmin"]}>
+              <div className="space-y-3">
+                <h1 className="text-2xl font-semibold">Requests</h1>
+                <p className="text-sm text-muted-foreground">Track blood requests and find compatible donors.</p>
+                <RequestTable />
+              </div>
+            </RoleGuard>
           </LayoutShell>
         </AppProviders>
       </SignedIn>

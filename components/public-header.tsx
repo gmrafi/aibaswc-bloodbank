@@ -7,9 +7,11 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { Menu, HeartHandshake, Users, ClipboardList } from "lucide-react"
 import { CLUB } from "@/lib/club-config"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
+import { useRole } from "@/hooks/use-role"
 
 export default function PublicHeader() {
   const [open, setOpen] = useState(false)
+  const { isAdmin } = useRole()
 
   return (
     <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
@@ -35,22 +37,26 @@ export default function PublicHeader() {
                 Contact
               </a>
               {/* Direct links to admin sections; unauth users will be redirected to sign-in */}
-              <Link
-                href="/donors"
-                prefetch={false}
-                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
-                onClick={() => setOpen(false)}
-              >
-                <Users className="size-4 mr-2" /> Donors
-              </Link>
-              <Link
-                href="/requests"
-                prefetch={false}
-                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
-                onClick={() => setOpen(false)}
-              >
-                <ClipboardList className="size-4 mr-2" /> Requests
-              </Link>
+              {isAdmin && (
+                <>
+                  <Link
+                    href="/donors"
+                    prefetch={false}
+                    className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Users className="size-4 mr-2" /> Donors
+                  </Link>
+                  <Link
+                    href="/requests"
+                    prefetch={false}
+                    className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                    onClick={() => setOpen(false)}
+                  >
+                    <ClipboardList className="size-4 mr-2" /> Requests
+                  </Link>
+                </>
+              )}
               <Link
                 href="/admin"
                 prefetch={false}
@@ -78,6 +84,26 @@ export default function PublicHeader() {
           <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
             Contact
           </a>
+          {isAdmin && (
+            <>
+              <Link
+                href="/donors"
+                prefetch={false}
+                className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <Users className="size-4 mr-2" /> Donors
+              </Link>
+              <Link
+                href="/requests"
+                prefetch={false}
+                className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <ClipboardList className="size-4 mr-2" /> Requests
+              </Link>
+            </>
+          )}
           <Link
             href="/profile"
             prefetch={false}
@@ -85,22 +111,6 @@ export default function PublicHeader() {
             onClick={() => setOpen(false)}
           >
             Profile
-          </Link>
-          <Link
-            href="/donors"
-            prefetch={false}
-            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
-            onClick={() => setOpen(false)}
-          >
-            <Users className="size-4 mr-2" /> Donors
-          </Link>
-          <Link
-            href="/requests"
-            prefetch={false}
-            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
-            onClick={() => setOpen(false)}
-          >
-            <ClipboardList className="size-4 mr-2" /> Requests
           </Link>
         </nav>
 

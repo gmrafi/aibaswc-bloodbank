@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServer } from "@/lib/supabase/server"
-import { getUserIdSafe } from "@/lib/auth/safe-auth"
+import { getUserRoleServer, isAdminLike } from "@/lib/auth/roles"
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  await getUserIdSafe()
+  const { role } = await getUserRoleServer()
+  if (!isAdminLike(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
   const payload = await req.json()
   const supabase = getSupabaseServer()
 
-  // Attempt with extended columns
   const attempt1 = await supabase
     .from("donors")
     .update({
@@ -50,7 +51,6 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     })
   }
 
-  // Fallback for older schema without batch/phone2
   const attempt2 = await supabase
     .from("donors")
     .update({
@@ -93,7 +93,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  await getUserIdSafe()
+  const { role } = await getUserRoleServer()
+  if (!isAdminLike(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
   const supabase = getSupabaseServer()
   const { error } = await supabase.from("donors").delete().eq("id", params.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

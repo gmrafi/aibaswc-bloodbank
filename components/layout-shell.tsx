@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useRole } from "@/hooks/use-role"
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
   const [navOpen, setNavOpen] = useState(false)
+  const { isAdmin } = useRole()
 
   const handleExport = () => {
     if (!blood) return
@@ -73,22 +74,26 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                 >
                   <Home className="size-4 mr-2" /> Dashboard
                 </Link>
-                <Link
-                  href="/donors"
-                  prefetch={false}
-                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
-                  onClick={() => setNavOpen(false)}
-                >
-                  <Users className="size-4 mr-2" /> Donors
-                </Link>
-                <Link
-                  href="/requests"
-                  prefetch={false}
-                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
-                  onClick={() => setNavOpen(false)}
-                >
-                  <ClipboardList className="size-4 mr-2" /> Requests
-                </Link>
+                {isAdmin && (
+                  <>
+                    <Link
+                      href="/donors"
+                      prefetch={false}
+                      className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      <Users className="size-4 mr-2" /> Donors
+                    </Link>
+                    <Link
+                      href="/requests"
+                      prefetch={false}
+                      className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                      onClick={() => setNavOpen(false)}
+                    >
+                      <ClipboardList className="size-4 mr-2" /> Requests
+                    </Link>
+                  </>
+                )}
                 <Link
                   href="/profile"
                   prefetch={false}
@@ -108,12 +113,19 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
             <Link href="/" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               <Home className="size-4" /> Dashboard
             </Link>
-            <Link href="/donors" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
-              <Users className="size-4" /> Donors
-            </Link>
-            <Link href="/requests" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
-              <ClipboardList className="size-4" /> Requests
-            </Link>
+            {isAdmin && (
+              <>
+                <Link href="/donors" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
+                  <Users className="size-4" /> Donors
+                </Link>
+                <Link
+                  href="/requests"
+                  className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm"
+                >
+                  <ClipboardList className="size-4" /> Requests
+                </Link>
+              </>
+            )}
             <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               Profile
             </Link>
