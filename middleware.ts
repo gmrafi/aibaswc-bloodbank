@@ -1,8 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
 
-const isPublicRoute = createRouteMatcher(["/", "/sign-in(.*)", "/sign-up(.*)"])
-const isAdminPage = createRouteMatcher(["/admin(.*)", "/donors(.*)", "/requests(.*)"])
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/donors(.*)",
+  "/requests(.*)",
+  "/profile(.*)",
+])
+const isAdminPage = createRouteMatcher(["/admin(.*)"])
 
 export default clerkMiddleware((auth, req) => {
   // Initialize Clerk session for this request
@@ -17,7 +24,7 @@ export default clerkMiddleware((auth, req) => {
   if (isAdminPage(req) && !userId) {
     const url = new URL("/sign-in", req.url)
     // Optional: preserve return path
-    url.searchParams.set("returnBackUrl", req.url)
+    url.searchParams.set("redirect_url", req.url)
     return NextResponse.redirect(url)
   }
 

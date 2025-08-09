@@ -89,6 +89,14 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                 >
                   <ClipboardList className="size-4 mr-2" /> Requests
                 </Link>
+                <Link
+                  href="/profile"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
+                >
+                  Profile
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -105,6 +113,9 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
             </Link>
             <Link href="/requests" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               <ClipboardList className="size-4" /> Requests
+            </Link>
+            <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
+              Profile
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
