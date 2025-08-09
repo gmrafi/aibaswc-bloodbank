@@ -87,9 +87,18 @@ export default function RequestTable() {
               </DialogHeader>
               <RequestForm
                 onCancel={() => setNewOpen(false)}
-                onSubmit={(data) => {
-                  addRequest(data)
-                  setNewOpen(false)
+                onSubmit={async (data) => {
+                  try {
+                    await addRequest(data)
+                    toast({ title: "Request created" })
+                    setNewOpen(false)
+                  } catch (e: any) {
+                    toast({
+                      title: "Failed to create request",
+                      description: e?.message ?? "Unknown error",
+                      variant: "destructive",
+                    })
+                  }
                 }}
               />
             </DialogContent>
@@ -153,15 +162,38 @@ export default function RequestTable() {
                       {r.status === "open" && (
                         <DropdownMenuItem
                           className="gap-2"
-                          onClick={() => {
-                            const updated = { ...r, status: "cancelled" as const }
-                            updateRequest(updated)
+                          onClick={async () => {
+                            try {
+                              const updated = { ...r, status: "cancelled" as const }
+                              await updateRequest(updated)
+                              toast({ title: "Request cancelled" })
+                            } catch (e: any) {
+                              toast({
+                                title: "Failed to cancel request",
+                                description: e?.message ?? "Unknown error",
+                                variant: "destructive",
+                              })
+                            }
                           }}
                         >
                           Cancel
                         </DropdownMenuItem>
                       )}
-                      <DropdownMenuItem className="gap-2 text-red-600" onClick={() => deleteRequest(r.id)}>
+                      <DropdownMenuItem
+                        className="gap-2 text-red-600"
+                        onClick={async () => {
+                          try {
+                            await deleteRequest(r.id)
+                            toast({ title: "Request deleted" })
+                          } catch (e: any) {
+                            toast({
+                              title: "Failed to delete request",
+                              description: e?.message ?? "Unknown error",
+                              variant: "destructive",
+                            })
+                          }
+                        }}
+                      >
                         <Trash2 className="size-4" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -190,9 +222,17 @@ export default function RequestTable() {
               request={view}
               donors={state.donors}
               onClose={() => setOpen(false)}
-              onSave={(updated) => {
-                updateRequest(updated)
-                setView(updated)
+              onSave={async (updated) => {
+                try {
+                  await updateRequest(updated)
+                  setView(updated)
+                } catch (e: any) {
+                  toast({
+                    title: "Failed to update request",
+                    description: e?.message ?? "Unknown error",
+                    variant: "destructive",
+                  })
+                }
               }}
               onCopyPhones={(d) => copyPhones(d)}
             />
@@ -347,26 +387,30 @@ function RequestDetails({
           Close
         </Button>
         <Button
-          onClick={() => {
-            const updated: BloodRequest = {
-              ...request,
-              matchedDonorIds: selected,
+          onClick={async () => {
+            try {
+              const updated: BloodRequest = { ...request, matchedDonorIds: selected }
+              await onSave(updated as any)
+              // Optional toast here if you pass toast into RequestDetails via props
+            } catch (e) {
+              // no-op; parent already shows toasts
             }
-            onSave(updated)
           }}
         >
           Save selection
         </Button>
         <Button
           variant="secondary"
-          onClick={() => {
-            const updated: BloodRequest = {
-              ...request,
-              status: "fulfilled",
-              fulfilledAt: new Date().toISOString(),
-              matchedDonorIds: selected,
-            }
-            onSave(updated)
+          onClick={async () => {
+            try {
+              const updated: BloodRequest = {
+                ...request,
+                status: "fulfilled",
+                fulfilledAt: new Date().toISOString(),
+                matchedDonorIds: selected,
+              }
+              await onSave(updated as any)
+            } catch (e) {}
           }}
         >
           Mark fulfilled

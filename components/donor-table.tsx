@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Pencil, Trash2, MoreVertical } from "lucide-react"
 import { BLOOD_GROUPS } from "@/lib/compatibility"
+import { useToast } from "@/hooks/use-toast"
 
 export default function DonorTable() {
   const { state, upsertDonor, deleteDonor } = useBlood()
@@ -46,6 +47,7 @@ export default function DonorTable() {
 
   const [editing, setEditing] = useState<Donor | null>(null)
   const [open, setOpen] = useState(false)
+  const { toast } = useToast()
 
   return (
     <div className="space-y-3">
@@ -109,9 +111,18 @@ export default function DonorTable() {
               <DonorForm
                 donor={editing}
                 onCancel={() => setOpen(false)}
-                onSubmit={(data) => {
-                  upsertDonor(data)
-                  setOpen(false)
+                onSubmit={async (data) => {
+                  try {
+                    await upsertDonor(data)
+                    toast({ title: editing ? "Donor updated" : "Donor added" })
+                    setOpen(false)
+                  } catch (e: any) {
+                    toast({
+                      title: "Failed to save donor",
+                      description: e?.message ?? "Unknown error",
+                      variant: "destructive",
+                    })
+                  }
                 }}
               />
             </DialogContent>
@@ -176,7 +187,21 @@ export default function DonorTable() {
                         >
                           <Pencil className="size-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 text-red-600" onClick={() => deleteDonor(d.id)}>
+                        <DropdownMenuItem
+                          className="gap-2 text-red-600"
+                          onClick={async () => {
+                            try {
+                              await deleteDonor(d.id)
+                              toast({ title: "Donor deleted" })
+                            } catch (e: any) {
+                              toast({
+                                title: "Failed to delete donor",
+                                description: e?.message ?? "Unknown error",
+                                variant: "destructive",
+                              })
+                            }
+                          }}
+                        >
                           <Trash2 className="size-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

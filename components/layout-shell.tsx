@@ -64,13 +64,25 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                 <SheetTitle>Army IBA Social Welfare Club Blood Bank</SheetTitle>
               </SheetHeader>
               <nav className="mt-4 grid gap-1">
-                <Link href="/" className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2">
+                <Link
+                  href="/"
+                  onClick={() => setImportOpen(false)}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                >
                   <Home className="size-4" /> Dashboard
                 </Link>
-                <Link href="/donors" className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2">
+                <Link
+                  href="/donors"
+                  onClick={() => setImportOpen(false)}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                >
                   <Users className="size-4" /> Donors
                 </Link>
-                <Link href="/requests" className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2">
+                <Link
+                  href="/requests"
+                  onClick={() => setImportOpen(false)}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2"
+                >
                   <ClipboardList className="size-4" /> Requests
                 </Link>
               </nav>
