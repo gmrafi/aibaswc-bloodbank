@@ -3,7 +3,7 @@
 import type React from "react"
 import { useRole } from "@/hooks/use-role"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -20,12 +20,34 @@ import { useToast } from "@/hooks/use-toast"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
 export default function LayoutShell({ children }: { children?: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const blood = useBloodOptional()
   const { toast } = useToast()
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
   const [navOpen, setNavOpen] = useState(false)
   const { isAdmin } = useRole()
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <header className="border-b bg-white sticky top-0 z-10">
+          <div className="mx-auto max-w-7xl px-4 py-3">
+            <div className="h-6 w-64 rounded bg-gray-200 animate-pulse" />
+          </div>
+        </header>
+        <main className="flex-1 bg-gray-50">
+          <div className="mx-auto max-w-7xl p-4">
+            <div className="h-40 rounded bg-gray-100 animate-pulse" />
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   const handleExport = () => {
     if (!blood) return
