@@ -15,6 +15,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Pencil, Trash2, MoreVertical } from "lucide-react"
 import { BLOOD_GROUPS } from "@/lib/compatibility"
 import { useToast } from "@/hooks/use-toast"
+import { useRole } from "@/hooks/use-role"
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
 
 export default function DonorTable() {
   const { state, upsertDonor, deleteDonor } = useBlood()
@@ -23,6 +25,8 @@ export default function DonorTable() {
   const [availability, setAvailability] = useState<string>("all")
   const [department, setDepartment] = useState<string>("all")
   const { toast } = useToast()
+  const { role } = useRole()
+  const canDeleteDonors = role === "superadmin"
 
   const departments = useMemo(() => {
     const set = new Set(state.donors.map((d) => d.department).filter(Boolean))
@@ -52,27 +56,40 @@ export default function DonorTable() {
 
   return (
     <div className="space-y-4">
-      {/* Inline Add Form */}
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="text-lg font-semibold mb-2">Add a Donor</h2>
-        <DonorForm
-          onCancel={() => {
-            // clear handled inside form by user
-          }}
-          onSubmit={async (data) => {
-            try {
-              await upsertDonor(data as any)
-              toast({ title: "Donor added" })
-            } catch (e: any) {
-              toast({
-                title: "Failed to add donor",
-                description: e?.message ?? "Unknown error",
-                variant: "destructive",
-              })
-            }
-          }}
-        />
-      </div>
+      <SignedIn>
+        <div className="rounded-lg border bg-white p-4">
+          <h2 className="text-lg font-semibold mb-2">Add a Donor</h2>
+          <DonorForm
+            onCancel={() => {
+              // clear handled inside form by user
+            }}
+            onSubmit={async (data) => {
+              try {
+                await upsertDonor(data as any)
+                toast({ title: "Donor added" })
+              } catch (e: any) {
+                toast({
+                  title: "Failed to add donor",
+                  description: e?.message ?? "Unknown error",
+                  variant: "destructive",
+                })
+              }
+            }}
+          />
+        </div>
+      </SignedIn>
+
+      <SignedOut>
+        <div className="rounded-lg border bg-blue-50 p-4">
+          <h2 className="text-lg font-semibold mb-2">Want to add a donor?</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Sign in to add new donors or manage existing donor information.
+          </p>
+          <SignInButton mode="modal">
+            <Button>Sign in to add donors</Button>
+          </SignInButton>
+        </div>
+      </SignedOut>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
@@ -134,7 +151,9 @@ export default function DonorTable() {
               <TableHead>Contact</TableHead>
               <TableHead className="whitespace-nowrap">Last Donation</TableHead>
               <TableHead>Eligible</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <SignedIn>
+                <TableHead className="text-right">Actions</TableHead>
+              </SignedIn>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -165,36 +184,54 @@ export default function DonorTable() {
                       <Badge variant="outline">Not yet</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size="icon" variant="ghost">
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="gap-2"
-                          onClick={() => {
-                            setEditing(d)
-                            setEditOpen(true)
-                          }}
-                        >
-                          <Pencil className="size-4" /> Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="gap-2 text-red-600"
-                          onClick={async () => {
-                            try {
-                              await deleteDonor(d.id)
-                            } catch {}
-                          }}
-                        >
-                          <Trash2 className="size-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  <SignedIn>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost">
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={() => {
+                              setEditing(d)
+                              setEditOpen(true)
+                            }}
+                          >
+                            <Pencil className="size-4" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="gap-2 text-red-600"
+                            onClick={async () => {
+                              if (!canDeleteDonors) {
+                                toast({
+                                  title: "Access denied",
+                                  description: "Only superadmin can delete donors",
+                                  variant: "destructive",
+                                })
+                                return
+                              }
+                              try {
+                                await deleteDonor(d.id)
+                                toast({ title: "Donor deleted successfully" })
+                              } catch (e: any) {
+                                toast({
+                                  title: "Failed to delete donor",
+                                  description: e?.message ?? "Unknown error",
+                                  variant: "destructive",
+                                })
+                              }
+                            }}
+                            disabled={!canDeleteDonors}
+                          >
+                            <Trash2 className="size-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </SignedIn>
                 </TableRow>
               )
             })}

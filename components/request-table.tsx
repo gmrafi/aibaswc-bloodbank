@@ -13,10 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Eye, MoreVertical, Trash2, CheckCheck, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useRole } from "@/hooks/use-role"
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
 
 export default function RequestTable() {
   const { state, addRequest, updateRequest, deleteRequest } = useBlood()
   const { toast } = useToast()
+  const { role } = useRole()
+  const canDeleteRequests = role === "superadmin"
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<"all" | "open" | "fulfilled" | "cancelled">("all")
 
@@ -49,24 +53,39 @@ export default function RequestTable() {
   return (
     <div className="space-y-4">
       {/* Inline create form */}
-      <div className="rounded-lg border bg-white p-4">
-        <h2 className="text-lg font-semibold mb-2">Create a Request</h2>
-        <RequestForm
-          onCancel={() => {}}
-          onSubmit={async (data) => {
-            try {
-              await addRequest(data as any)
-              toast({ title: "Request created" })
-            } catch (e: any) {
-              toast({
-                title: "Failed to create request",
-                description: e?.message ?? "Unknown error",
-                variant: "destructive",
-              })
-            }
-          }}
-        />
-      </div>
+      <SignedIn>
+        <div className="rounded-lg border bg-white p-4">
+          <h2 className="text-lg font-semibold mb-2">Create a Request</h2>
+          <RequestForm
+            onCancel={() => {}}
+            onSubmit={async (data) => {
+              try {
+                await addRequest(data as any)
+                toast({ title: "Request created" })
+              } catch (e: any) {
+                toast({
+                  title: "Failed to create request",
+                  description: e?.message ?? "Unknown error",
+                  variant: "destructive",
+                })
+              }
+            }}
+          />
+        </div>
+      </SignedIn>
+
+      {/* Sign in prompt for non-authenticated users */}
+      <SignedOut>
+        <div className="rounded-lg border bg-red-50 p-4">
+          <h2 className="text-lg font-semibold mb-2">Need blood urgently?</h2>
+          <p className="text-sm text-muted-foreground mb-3">
+            Sign in to create blood requests and get matched with compatible donors.
+          </p>
+          <SignInButton mode="modal">
+            <Button>Sign in to create request</Button>
+          </SignInButton>
+        </div>
+      </SignedOut>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
@@ -103,7 +122,9 @@ export default function RequestTable() {
               <TableHead>Hospital</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <SignedIn>
+                <TableHead className="text-right">Actions</TableHead>
+              </SignedIn>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,42 +156,67 @@ export default function RequestTable() {
                   {r.status === "fulfilled" && <Badge className="bg-emerald-600 hover:bg-emerald-600">Fulfilled</Badge>}
                   {r.status === "cancelled" && <Badge variant="destructive">Cancelled</Badge>}
                 </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button size="icon" variant="ghost">
-                        <MoreVertical className="size-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        className="gap-2"
-                        onClick={() => {
-                          setView(r)
-                          setOpen(true)
-                        }}
-                      >
-                        <Eye className="size-4" /> View & match
-                      </DropdownMenuItem>
-                      {r.status === "open" && (
+                <SignedIn>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button size="icon" variant="ghost">
+                          <MoreVertical className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
                         <DropdownMenuItem
                           className="gap-2"
-                          onClick={async () => {
-                            try {
-                              const updated = { ...r, status: "cancelled" as const }
-                              await updateRequest(updated)
-                            } catch {}
+                          onClick={() => {
+                            setView(r)
+                            setOpen(true)
                           }}
                         >
-                          Cancel
+                          <Eye className="size-4" /> View & match
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem className="gap-2 text-red-600" onClick={() => deleteRequest(r.id)}>
-                        <Trash2 className="size-4" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+                        {r.status === "open" && (
+                          <DropdownMenuItem
+                            className="gap-2"
+                            onClick={async () => {
+                              try {
+                                const updated = { ...r, status: "cancelled" as const }
+                                await updateRequest(updated)
+                              } catch {}
+                            }}
+                          >
+                            Cancel
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          className="gap-2 text-red-600"
+                          onClick={async () => {
+                            if (!canDeleteRequests) {
+                              toast({
+                                title: "Access denied",
+                                description: "Only superadmin can delete requests",
+                                variant: "destructive",
+                              })
+                              return
+                            }
+                            try {
+                              await deleteRequest(r.id)
+                              toast({ title: "Request deleted successfully" })
+                            } catch (e: any) {
+                              toast({
+                                title: "Failed to delete request",
+                                description: e?.message ?? "Unknown error",
+                                variant: "destructive",
+                              })
+                            }
+                          }}
+                          disabled={!canDeleteRequests}
+                        >
+                          <Trash2 className="size-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </SignedIn>
               </TableRow>
             ))}
             {filtered.length === 0 && (

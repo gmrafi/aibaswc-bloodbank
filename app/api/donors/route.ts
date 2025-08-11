@@ -79,3 +79,63 @@ export async function POST(req: Request) {
   if (attempt2.error) return NextResponse.json({ error: attempt2.error.message }, { status: 500 })
   return NextResponse.json(mapRow(attempt2.data))
 }
+
+export async function DELETE(req: Request) {
+  const { role } = await getUserRoleServer()
+  if (role !== "superadmin") {
+    return NextResponse.json({ error: "Only superadmin can delete donors" }, { status: 403 })
+  }
+
+  const url = new URL(req.url)
+  const id = url.searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json({ error: "Donor ID is required" }, { status: 400 })
+  }
+
+  const supabase = getSupabaseServer()
+  const { error } = await supabase.from("donors").delete().eq("id", id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
+}
+
+export async function PUT(req: Request) {
+  const { role } = await getUserRoleServer()
+  if (!isAdminLike(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const payload = await req.json()
+  const supabase = getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("donors")
+    .update({
+      name: payload.name,
+      batch: payload.batch ?? null,
+      student_id: payload.studentId,
+      department: payload.department,
+      blood_group: payload.bloodGroup,
+      phone: payload.phone,
+      phone2: payload.phone2 ?? null,
+      email: payload.email ?? null,
+      contact_preference: payload.contactPreference ?? null,
+      willing: payload.willing ?? true,
+      last_donation: payload.lastDonation ?? null,
+      notes: payload.notes ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", payload.id)
+    .select("*")
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(mapRow(data))
+}

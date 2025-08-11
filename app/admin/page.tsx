@@ -5,9 +5,11 @@ import { SignedOut, SignIn, useUser } from "@clerk/nextjs"
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import Dashboard from "@/components/ui-dashboard"
+import SystemStatus from "@/components/system-status"
 import { useRole } from "@/hooks/use-role"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { Shield, Users, ClipboardList } from "lucide-react"
 
 export default function AdminPage() {
   const { isLoaded, isSignedIn } = useUser()
@@ -18,7 +20,6 @@ export default function AdminPage() {
     setMounted(true)
   }, [])
 
-  // Show a lightweight skeleton until React has mounted and Clerk is ready
   if (!mounted || !isLoaded || loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -30,7 +31,6 @@ export default function AdminPage() {
     )
   }
 
-  // Not signed in: show Clerk SignIn
   if (!isSignedIn) {
     return (
       <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
@@ -41,22 +41,27 @@ export default function AdminPage() {
     )
   }
 
-  // Signed in but not admin-like on client: friendly message
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-white">
         <div className="mx-auto max-w-2xl p-6 text-center space-y-4">
-          <h2 className="text-xl font-semibold">আপনার অ্যাডমিন অ্যাক্সেস নেই</h2>
+          <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4">
+            <Shield className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-semibold">Admin Access Required</h2>
           <p className="text-sm text-muted-foreground">
-            সুপারঅ্যাডমিন/অ্যাডমিন রোল প্রয়োজন। আপনার ইমেইলটি NEXT_PUBLIC_SUPERADMIN_EMAIL / SUPERADMIN_EMAIL এর সাথে মিলছে কিনা
-            যাচাই করুন।
+            You need admin or superadmin privileges to access this page. Contact the system administrator if you believe
+            this is an error.
           </p>
+          <div className="text-xs text-muted-foreground">
+            Current role: <span className="font-mono bg-gray-100 px-1 rounded">{role}</span>
+          </div>
           <div className="flex items-center justify-center gap-2">
             <Link href="/">
-              <Button>হোম</Button>
+              <Button>Go to Dashboard</Button>
             </Link>
             <Link href="/profile">
-              <Button variant="outline">প্রোফাইল</Button>
+              <Button variant="outline">View Profile</Button>
             </Link>
           </div>
         </div>
@@ -64,11 +69,40 @@ export default function AdminPage() {
     )
   }
 
-  // Admin UI
   return (
     <AppProviders>
       <LayoutShell>
-        <Dashboard />
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
+              <p className="text-sm text-muted-foreground">Manage the blood bank system and monitor integrations</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/donors">
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <Users className="size-4" />
+                  Manage Donors
+                </Button>
+              </Link>
+              <Link href="/requests">
+                <Button variant="outline" className="gap-2 bg-transparent">
+                  <ClipboardList className="size-4" />
+                  Manage Requests
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <Dashboard />
+            </div>
+            <div>
+              <SystemStatus />
+            </div>
+          </div>
+        </div>
       </LayoutShell>
     </AppProviders>
   )

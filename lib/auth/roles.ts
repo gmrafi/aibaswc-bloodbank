@@ -19,19 +19,20 @@ export async function getUserRoleServer(): Promise<{ userId: string | null; role
 
     if (!prof) {
       const email = await getUserEmailSafe()
+      const defaultRole = "admin"
       const { data } = await supabase
         .from("profiles")
         .insert({
           clerk_user_id: userId,
-          role: "user",
+          role: defaultRole,
           updated_at: new Date().toISOString(),
         })
         .select("*")
         .single()
-      return { userId, role: (data?.role as Role) ?? "user" }
+      return { userId, role: (data?.role as Role) ?? defaultRole }
     }
 
-    let role: Role = (prof.role as Role) ?? "user"
+    let role: Role = (prof.role as Role) ?? "admin"
 
     const superEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim()
     if (superEmail) {
@@ -51,10 +52,14 @@ export async function getUserRoleServer(): Promise<{ userId: string | null; role
     return { userId, role }
   } catch (error) {
     console.error("Role determination error:", error)
-    return { userId, role: "user" }
+    return { userId, role: "admin" }
   }
 }
 
 export function isAdminLike(role: Role) {
   return role === "admin" || role === "superadmin"
+}
+
+export function canDelete(role: Role) {
+  return role === "superadmin"
 }

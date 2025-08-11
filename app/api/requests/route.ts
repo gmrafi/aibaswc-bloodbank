@@ -87,3 +87,68 @@ export async function POST(req: Request) {
   if (attempt2.error) return NextResponse.json({ error: attempt2.error.message }, { status: 500 })
   return NextResponse.json(mapRow(attempt2.data))
 }
+
+export async function DELETE(req: Request) {
+  const { role } = await getUserRoleServer()
+  if (role !== "superadmin") {
+    return NextResponse.json({ error: "Only superadmin can delete requests" }, { status: 403 })
+  }
+
+  const url = new URL(req.url)
+  const id = url.searchParams.get("id")
+
+  if (!id) {
+    return NextResponse.json({ error: "Request ID is required" }, { status: 400 })
+  }
+
+  const supabase = getSupabaseServer()
+  const { error } = await supabase.from("requests").delete().eq("id", id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
+}
+
+export async function PUT(req: Request) {
+  const { role } = await getUserRoleServer()
+  if (!isAdminLike(role)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+
+  const payload = await req.json()
+  const supabase = getSupabaseServer()
+
+  const { data, error } = await supabase
+    .from("requests")
+    .update({
+      patient_name: payload.patientName,
+      blood_group: payload.bloodGroup,
+      units: payload.units,
+      needed_by: payload.neededBy,
+      hospital: payload.hospital ?? null,
+      ward: payload.ward ?? null,
+      location: payload.location,
+      contact_person: payload.contactPerson,
+      contact_phone: payload.contactPhone,
+      contact_phone2: payload.contactPhone2 ?? null,
+      requested_by: payload.requestedBy ?? null,
+      relation_to_patient: payload.relationToPatient ?? null,
+      urgency: payload.urgency ?? "normal",
+      notes: payload.notes ?? null,
+      status: payload.status,
+      fulfilled_at: payload.fulfilledAt ?? null,
+      matched_donor_ids: payload.matchedDonorIds ?? [],
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", payload.id)
+    .select("*")
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(mapRow(data))
+}

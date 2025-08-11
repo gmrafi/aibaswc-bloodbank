@@ -7,11 +7,9 @@ import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle } from "@/co
 import { Menu, HeartHandshake, Users, ClipboardList } from "lucide-react"
 import { CLUB } from "@/lib/club-config"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
-import { useRole } from "@/hooks/use-role"
 
 export default function PublicHeader() {
   const [open, setOpen] = useState(false)
-  const { isAdmin } = useRole()
 
   return (
     <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
@@ -36,27 +34,22 @@ export default function PublicHeader() {
               <a href="#contact" className="px-2 py-2 rounded-md hover:bg-muted/60" onClick={() => setOpen(false)}>
                 Contact
               </a>
-              {/* Direct links to admin sections; unauth users will be redirected to sign-in */}
-              {isAdmin && (
-                <>
-                  <Link
-                    href="/donors"
-                    prefetch={false}
-                    className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
-                    onClick={() => setOpen(false)}
-                  >
-                    <Users className="size-4 mr-2" /> Donors
-                  </Link>
-                  <Link
-                    href="/requests"
-                    prefetch={false}
-                    className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
-                    onClick={() => setOpen(false)}
-                  >
-                    <ClipboardList className="size-4 mr-2" /> Requests
-                  </Link>
-                </>
-              )}
+              <Link
+                href="/donors"
+                prefetch={false}
+                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <Users className="size-4 mr-2" /> Donors
+              </Link>
+              <Link
+                href="/requests"
+                prefetch={false}
+                className="px-2 py-2 rounded-md hover:bg-muted/60 font-medium flex items-center"
+                onClick={() => setOpen(false)}
+              >
+                <ClipboardList className="size-4 mr-2" /> Requests
+              </Link>
               <Link
                 href="/admin"
                 prefetch={false}
@@ -75,41 +68,30 @@ export default function PublicHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 ml-6">
-          <a href="#features" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
+          <a href="#features" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             Features
           </a>
-          <a href="#how" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
+          <a href="#how" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             How it works
           </a>
-          <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm" onClick={() => setOpen(false)}>
+          <a href="#contact" className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             Contact
           </a>
-          {isAdmin && (
-            <>
-              <Link
-                href="/donors"
-                prefetch={false}
-                className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
-                onClick={() => setOpen(false)}
-              >
-                <Users className="size-4 mr-2" /> Donors
-              </Link>
-              <Link
-                href="/requests"
-                prefetch={false}
-                className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
-                onClick={() => setOpen(false)}
-              >
-                <ClipboardList className="size-4 mr-2" /> Requests
-              </Link>
-            </>
-          )}
           <Link
-            href="/profile"
+            href="/donors"
             prefetch={false}
-            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm"
-            onClick={() => setOpen(false)}
+            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
           >
+            <Users className="size-4 mr-2" /> Donors
+          </Link>
+          <Link
+            href="/requests"
+            prefetch={false}
+            className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm flex items-center"
+          >
+            <ClipboardList className="size-4 mr-2" /> Requests
+          </Link>
+          <Link href="/profile" prefetch={false} className="px-3 py-2 rounded-md hover:bg-muted/60 text-sm">
             Profile
           </Link>
         </nav>
@@ -123,7 +105,7 @@ export default function PublicHeader() {
           <SignedIn>
             <UserButton />
           </SignedIn>
-          <Link href="/admin" prefetch={false} onClick={() => setOpen(false)}>
+          <Link href="/admin" prefetch={false}>
             <Button className="bg-black hover:bg-black/90">Admin Portal</Button>
           </Link>
         </div>

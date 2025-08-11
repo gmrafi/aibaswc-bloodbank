@@ -114,7 +114,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
   const upsertDonor: Ctx["upsertDonor"] = useCallback(
     async (payload) => {
       if (payload.id) {
-        await api(`/api/donors/${payload.id}`, { method: "PUT", body: JSON.stringify(payload) })
+        await api("/api/donors", { method: "PUT", body: JSON.stringify(payload) })
       } else {
         await api("/api/donors", { method: "POST", body: JSON.stringify(payload) })
       }
@@ -126,7 +126,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
 
   const deleteDonor: Ctx["deleteDonor"] = useCallback(
     async (id: string) => {
-      await api(`/api/donors/${id}`, { method: "DELETE" })
+      await api(`/api/donors?id=${encodeURIComponent(id)}`, { method: "DELETE" })
       const controller = new AbortController()
       await refresh(controller.signal)
     },
@@ -144,7 +144,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
 
   const updateRequest: Ctx["updateRequest"] = useCallback(
     async (req) => {
-      await api(`/api/requests/${req.id}`, { method: "PUT", body: JSON.stringify(req) })
+      await api("/api/requests", { method: "PUT", body: JSON.stringify(req) })
       const controller = new AbortController()
       await refresh(controller.signal)
     },
@@ -153,7 +153,7 @@ export function BloodProvider({ children }: { children?: React.ReactNode }) {
 
   const deleteRequest: Ctx["deleteRequest"] = useCallback(
     async (id) => {
-      await api(`/api/requests/${id}`, { method: "DELETE" })
+      await api(`/api/requests?id=${encodeURIComponent(id)}`, { method: "DELETE" })
       const controller = new AbortController()
       await refresh(controller.signal)
     },
