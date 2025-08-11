@@ -22,10 +22,19 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
       <SignedOut>
-        <SignUp appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} afterSignUpUrl="/" />
+        <SignUp
+          appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }}
+          afterSignUpUrl="/"
+          redirectUrl="/"
+        />
       </SignedOut>
       <SignedIn>
-        <div className="text-sm text-muted-foreground">You are already signed in.</div>
+        <div className="text-center space-y-4">
+          <div className="text-sm text-muted-foreground">You are already signed in.</div>
+          <a href="/" className="text-blue-600 hover:underline text-sm">
+            Go to Homepage
+          </a>
+        </div>
       </SignedIn>
     </div>
   )

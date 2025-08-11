@@ -23,10 +23,20 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
       <SignedOut>
-        <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} afterSignInUrl="/" />
+        <SignIn
+          appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }}
+          afterSignInUrl="/"
+          redirectUrl="/"
+        />
       </SignedOut>
       <SignedIn>
-        <div className="text-sm text-muted-foreground">You are already signed in.</div>
+        {/* Added homepage link for already signed in users */}
+        <div className="text-center space-y-4">
+          <div className="text-sm text-muted-foreground">You are already signed in.</div>
+          <a href="/" className="text-blue-600 hover:underline text-sm">
+            Go to Homepage
+          </a>
+        </div>
       </SignedIn>
     </div>
   )
