@@ -9,6 +9,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { useRole } from "@/hooks/use-role"
+import { Badge } from "@/components/ui/badge"
 
 type CampusProfile = {
   batch?: string
@@ -19,6 +21,20 @@ type CampusProfile = {
 }
 
 export default function ProfilePage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
+        <div className="h-8 w-32 rounded bg-gray-200 animate-pulse" />
+      </div>
+    )
+  }
+
   return (
     <>
       <SignedOut>
@@ -51,6 +67,7 @@ export default function ProfilePage() {
 
 function CampusProfileCard() {
   const { user } = useUser()
+  const { role, loading: roleLoading } = useRole()
   const { toast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -63,7 +80,8 @@ function CampusProfileCard() {
         const res = await fetch("/api/profile")
         const json = await res.json()
         if (active) setData(json ?? {})
-      } catch {
+      } catch (error) {
+        console.error("Profile fetch error:", error)
       } finally {
         if (active) setLoading(false)
       }
@@ -86,7 +104,11 @@ function CampusProfileCard() {
   const save = async () => {
     try {
       setSaving(true)
-      const res = await fetch("/api/profile", { method: "PUT", body: JSON.stringify(data) })
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
       if (!res.ok) {
         const msg = await res.text()
         throw new Error(msg || "Failed")
@@ -101,8 +123,13 @@ function CampusProfileCard() {
 
   return (
     <Card>
-      <CardHeader className="flex items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Campus Profile</CardTitle>
+        {!roleLoading && (
+          <Badge variant={role === "superadmin" ? "default" : role === "admin" ? "secondary" : "outline"}>
+            {role === "superadmin" ? "Super Admin" : role === "admin" ? "Admin" : "User"}
+          </Badge>
+        )}
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid md:grid-cols-2 gap-3">
@@ -113,6 +140,7 @@ function CampusProfileCard() {
               value={data.batch ?? ""}
               onChange={(e) => setData((d) => ({ ...d, batch: e.target.value }))}
               disabled={loading}
+              placeholder="e.g., 2023"
             />
           </div>
           <div className="grid gap-1.5">
@@ -122,6 +150,7 @@ function CampusProfileCard() {
               value={data.department ?? ""}
               onChange={(e) => setData((d) => ({ ...d, department: e.target.value }))}
               disabled={loading}
+              placeholder="e.g., CSE"
             />
           </div>
         </div>
@@ -133,6 +162,7 @@ function CampusProfileCard() {
               value={data.phone1 ?? ""}
               onChange={(e) => setData((d) => ({ ...d, phone1: e.target.value }))}
               disabled={loading}
+              placeholder="Primary phone number"
             />
           </div>
           <div className="grid gap-1.5">
@@ -142,6 +172,7 @@ function CampusProfileCard() {
               value={data.phone2 ?? ""}
               onChange={(e) => setData((d) => ({ ...d, phone2: e.target.value }))}
               disabled={loading}
+              placeholder="Secondary phone number"
             />
           </div>
         </div>

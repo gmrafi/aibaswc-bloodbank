@@ -15,7 +15,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
 import { useBloodOptional } from "./blood-context"
-import { Menu, Download, Upload, HeartHandshake, Users, ClipboardList, Home } from "lucide-react"
+import { Menu, Download, Upload, HeartHandshake, Users, ClipboardList, Home, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
 
@@ -30,7 +30,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
   const [navOpen, setNavOpen] = useState(false)
-  const { isAdmin } = useRole()
+  const { isAdmin, loading: roleLoading } = useRole()
 
   if (!mounted) {
     return (
@@ -96,7 +96,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                 >
                   <Home className="size-4 mr-2" /> Dashboard
                 </Link>
-                {isAdmin && (
+                {!roleLoading && isAdmin && (
                   <>
                     <Link
                       href="/donors"
@@ -122,7 +122,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                   className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
                   onClick={() => setNavOpen(false)}
                 >
-                  Profile
+                  <User className="size-4 mr-2" /> Profile
                 </Link>
               </nav>
             </SheetContent>
@@ -135,7 +135,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
             <Link href="/" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               <Home className="size-4" /> Dashboard
             </Link>
-            {isAdmin && (
+            {!roleLoading && isAdmin && (
               <>
                 <Link href="/donors" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
                   <Users className="size-4" /> Donors
@@ -149,11 +149,11 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
               </>
             )}
             <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
-              Profile
+              <User className="size-4" /> Profile
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            {blood && (
+            {blood && !roleLoading && isAdmin && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2 bg-transparent">
@@ -186,7 +186,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
         <div className="mx-auto max-w-7xl p-4">{children}</div>
       </main>
 
-      {blood && (
+      {blood && !roleLoading && isAdmin && (
         <Sheet open={importOpen} onOpenChange={setImportOpen}>
           <SheetContent side="right" className="w-full sm:w-[540px]">
             <SheetHeader>
