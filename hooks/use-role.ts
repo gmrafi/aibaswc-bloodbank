@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useUser } from "@clerk/nextjs"
 
-export type Role = "user" | "admin" | "superadmin"
+export type Role = "user" | "superadmin"
 
 export function useRole() {
   const { user, isLoaded } = useUser()
@@ -45,5 +45,5 @@ export function useRole() {
     determineRole()
   }, [isLoaded, user])
 
-  return { role, loading, isAdmin: role === "admin" || role === "superadmin" }
+  return { role, loading, isAdmin: role === "superadmin" }
 }

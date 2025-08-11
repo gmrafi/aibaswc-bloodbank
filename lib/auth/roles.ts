@@ -1,7 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server"
 import { getUserIdSafe, getUserEmailSafe } from "@/lib/auth/safe-auth"
 
-export type Role = "user" | "admin" | "superadmin"
+export type Role = "user" | "superadmin"
 
 export async function getUserRoleServer(): Promise<{ userId: string | null; role: Role }> {
   const userId = await getUserIdSafe()
@@ -19,7 +19,7 @@ export async function getUserRoleServer(): Promise<{ userId: string | null; role
 
     if (!prof) {
       const email = await getUserEmailSafe()
-      const defaultRole = "admin"
+      const defaultRole = "user"
       const { data } = await supabase
         .from("profiles")
         .insert({
@@ -32,7 +32,7 @@ export async function getUserRoleServer(): Promise<{ userId: string | null; role
       return { userId, role: (data?.role as Role) ?? defaultRole }
     }
 
-    let role: Role = (prof.role as Role) ?? "admin"
+    let role: Role = (prof.role as Role) ?? "user"
 
     const superEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim()
     if (superEmail) {
@@ -52,12 +52,13 @@ export async function getUserRoleServer(): Promise<{ userId: string | null; role
     return { userId, role }
   } catch (error) {
     console.error("Role determination error:", error)
-    return { userId, role: "admin" }
+    return { userId, role: "user" }
   }
 }
 
+// Added back isAdminLike function for backward compatibility
 export function isAdminLike(role: Role) {
-  return role === "admin" || role === "superadmin"
+  return role === "superadmin"
 }
 
 export function canDelete(role: Role) {

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Input } from "@/components/ui/input"
-import { useBloodOptional } from "./blood-context"
+import { useBloodOptional } from "@/hooks/use-blood-optional"
 import { Menu, Download, Upload, HeartHandshake, Users, ClipboardList, Home, User } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs"
@@ -30,7 +30,7 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
   const [importOpen, setImportOpen] = useState(false)
   const [fileContent, setFileContent] = useState("")
   const [navOpen, setNavOpen] = useState(false)
-  const { isAdmin, loading: roleLoading } = useRole()
+  const { role, loading: roleLoading } = useRole()
 
   if (!mounted) {
     return (
@@ -96,26 +96,23 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
                 >
                   <Home className="size-4 mr-2" /> Dashboard
                 </Link>
-                {!roleLoading && isAdmin && (
-                  <>
-                    <Link
-                      href="/donors"
-                      prefetch={false}
-                      className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      <Users className="size-4 mr-2" /> Donors
-                    </Link>
-                    <Link
-                      href="/requests"
-                      prefetch={false}
-                      className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
-                      onClick={() => setNavOpen(false)}
-                    >
-                      <ClipboardList className="size-4 mr-2" /> Requests
-                    </Link>
-                  </>
-                )}
+                {/* Removed role restrictions - everyone can see donors and requests */}
+                <Link
+                  href="/donors"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
+                >
+                  <Users className="size-4 mr-2" /> Donors
+                </Link>
+                <Link
+                  href="/requests"
+                  prefetch={false}
+                  className="px-2 py-2 rounded-md hover:bg-muted/60 flex items-center"
+                  onClick={() => setNavOpen(false)}
+                >
+                  <ClipboardList className="size-4 mr-2" /> Requests
+                </Link>
                 <Link
                   href="/profile"
                   prefetch={false}
@@ -135,25 +132,20 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
             <Link href="/" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               <Home className="size-4" /> Dashboard
             </Link>
-            {!roleLoading && isAdmin && (
-              <>
-                <Link href="/donors" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
-                  <Users className="size-4" /> Donors
-                </Link>
-                <Link
-                  href="/requests"
-                  className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm"
-                >
-                  <ClipboardList className="size-4" /> Requests
-                </Link>
-              </>
-            )}
+            {/* Removed role restrictions - everyone can see donors and requests */}
+            <Link href="/donors" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
+              <Users className="size-4" /> Donors
+            </Link>
+            <Link href="/requests" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
+              <ClipboardList className="size-4" /> Requests
+            </Link>
             <Link href="/profile" className="px-3 py-2 rounded-md hover:bg-muted/60 flex items-center gap-2 text-sm">
               <User className="size-4" /> Profile
             </Link>
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            {blood && !roleLoading && isAdmin && (
+            {/* Only show data export/import for superadmin */}
+            {blood && !roleLoading && role === "superadmin" && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-2 bg-transparent">
@@ -186,7 +178,8 @@ export default function LayoutShell({ children }: { children?: React.ReactNode }
         <div className="mx-auto max-w-7xl p-4">{children}</div>
       </main>
 
-      {blood && !roleLoading && isAdmin && (
+      {/* Only show import dialog for superadmin */}
+      {blood && !roleLoading && role === "superadmin" && (
         <Sheet open={importOpen} onOpenChange={setImportOpen}>
           <SheetContent side="right" className="w-full sm:w-[540px]">
             <SheetHeader>

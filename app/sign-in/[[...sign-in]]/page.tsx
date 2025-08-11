@@ -23,7 +23,7 @@ export default function SignInPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
       <SignedOut>
-        <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} />
+        <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} afterSignInUrl="/" />
       </SignedOut>
       <SignedIn>
         <div className="text-sm text-muted-foreground">You are already signed in.</div>

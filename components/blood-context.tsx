@@ -63,7 +63,7 @@ type Ctx = {
   importJSON: (json: string) => Promise<{ ok: boolean; error?: string }>
 }
 
-const BloodContext = createContext<Ctx | null>(null)
+export const BloodContext = createContext<Ctx | null>(null)
 
 async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
