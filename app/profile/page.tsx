@@ -52,13 +52,14 @@ type CampusProfile = {
 
 export default function ProfilePage() {
   const [mounted, setMounted] = useState(false)
+  const { isLoaded, isSignedIn, user } = useUser()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Show loading state until mounted to prevent hydration mismatch
-  if (!mounted) {
+  // Show loading state until mounted and Clerk is loaded
+  if (!mounted || !isLoaded) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="h-16 bg-white shadow-sm border-b" />
@@ -75,48 +76,71 @@ export default function ProfilePage() {
     )
   }
 
-  return (
-    <>
-      <SignedOut>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-          <Header />
-          <div className="grid place-items-center p-4 pt-20">
+  // Handle authentication error state
+  if (isLoaded && !isSignedIn) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <Header />
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
+          <div className="grid place-items-center min-h-[60vh]">
             <Card className="w-full max-w-md shadow-xl">
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-gray-800">Welcome Back</CardTitle>
-                <p className="text-gray-600">Sign in to access your profile</p>
+                <CardTitle className="text-2xl font-bold text-gray-800">Access Your Profile</CardTitle>
+                <p className="text-gray-600">Sign in to manage your blood donation profile</p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <SignIn appearance={{ 
                   elements: { 
                     formButtonPrimary: "bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors",
                     card: "shadow-none border-0"
                   } 
                 }} />
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-2">Having trouble signing in?</p>
+                  <div className="flex gap-2 justify-center">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.href = '/'}
+                    >
+                      <Home className="w-4 h-4 mr-2" />
+                      Go to Homepage
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.location.href = '/sign-up'}
+                    >
+                      Create Account
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
         </div>
-      </SignedOut>
-      <SignedIn>
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-          <Header />
-          <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
-            <Breadcrumb />
-            <ProfileHero />
-            <div className="grid gap-6 lg:grid-cols-2">
-              <AccountProfileCard />
-              <CampusProfileCard />
-            </div>
-          </div>
+      </div>
+    )
+  }
+
+  // Show authenticated content
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header />
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
+        <Breadcrumb />
+        <ProfileHero />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <AccountProfileCard />
+          <CampusProfileCard />
         </div>
-      </SignedIn>
-    </>
+      </div>
+    </div>
   )
 }
 
 function Header() {
-  const { user } = useUser()
+  const { user, isSignedIn } = useUser()
   const { role } = useRole()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -127,19 +151,26 @@ function Header() {
     ...(role === 'admin' || role === 'superadmin' ? [{ name: 'Admin', href: '/admin', icon: Settings }] : []),
   ]
 
+  const handleSignOut = () => {
+    // Simple redirect to Clerk's sign-out page
+    window.location.href = '/sign-out'
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-              <Droplets className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Blood Bank</h1>
-              <p className="text-xs text-gray-500">Army IBA Social Welfare Club</p>
-            </div>
+            <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                <Droplets className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Blood Bank</h1>
+                <p className="text-xs text-gray-500">Army IBA Social Welfare Club</p>
+              </div>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
@@ -158,7 +189,7 @@ function Header() {
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
-            {user && (
+            {isSignedIn && user && (
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
@@ -199,7 +230,7 @@ function Header() {
                 </Link>
               ))}
               
-              {user && (
+              {isSignedIn && user && (
                 <>
                   <Separator className="my-3" />
                   <div className="px-4 py-3">
@@ -218,10 +249,7 @@ function Header() {
                     <Button 
                       variant="outline" 
                       className="w-full justify-start"
-                      onClick={() => {
-                        // Clerk sign out
-                        window.location.href = '/sign-out'
-                      }}
+                      onClick={handleSignOut}
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
