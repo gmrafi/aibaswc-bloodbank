@@ -10,12 +10,16 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // Use env when available; fall back to your provided test key for preview.
-  const publishableKey =
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_cmlnaHQtc3R1ZC0wLmNsZXJrLmFjY291bnRzLmRldiQ"
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const isProduction = publishableKey?.startsWith("pk_live_")
+  const currentDomain = typeof window !== "undefined" ? window.location.hostname : "localhost"
+
+  // Use test key for preview environments or when production key is present but domain doesn't match
+  const shouldUseTestKey = !publishableKey || (isProduction && !currentDomain.includes("aibaswc.gmrafi.com"))
+  const finalKey = shouldUseTestKey ? "pk_test_cmlnaHQtc3R1ZC0wLmNsZXJrLmFjY291bnRzLmRldiQ" : publishableKey
 
   return (
-    <ClerkProvider publishableKey={publishableKey} signInUrl="/sign-in" signUpUrl="/sign-up">
+    <ClerkProvider publishableKey={finalKey} signInUrl="/sign-in" signUpUrl="/sign-up">
       <html lang="en">
         <body>{children}</body>
       </html>
