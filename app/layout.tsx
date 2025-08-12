@@ -11,8 +11,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  const signInUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || "/sign-in"
+  const signUpUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || "/sign-up"
+  const afterSignInUrl = process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL || undefined
+  const afterSignUpUrl = process.env.NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL || undefined
+  const frontendApi = process.env.NEXT_PUBLIC_CLERK_FRONTEND_API || undefined
 
-  // If missing, render a clear message in non-production; in production, Clerk won’t init.
   if (!publishableKey) {
     return (
       <html lang="en" suppressHydrationWarning>
@@ -27,7 +31,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} signInUrl="/sign-in" signUpUrl="/sign-up">
+    <ClerkProvider
+      publishableKey={publishableKey}
+      signInUrl={signInUrl}
+      signUpUrl={signUpUrl}
+      appearance={{}}
+      frontendApi={frontendApi}
+      afterSignInUrl={afterSignInUrl}
+      afterSignUpUrl={afterSignUpUrl}
+    >
       <html lang="en" suppressHydrationWarning>
         <body suppressHydrationWarning>{children}</body>
       </html>
