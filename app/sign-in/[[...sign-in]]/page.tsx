@@ -1,17 +1,27 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { SignIn, SignedIn, SignedOut, useUser } from "@clerk/nextjs"
+import { SignIn, useUser } from "@clerk/nextjs"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export default function SignInPage() {
-  const { isLoaded } = useUser()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectUrl = searchParams.get("redirect_url") || "/profile"
+  const { isLoaded, isSignedIn } = useUser()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Avoid rendering Clerk widget until both React mounted and Clerk is ready
+  // If already signed in, go to the intended page immediately
+  useEffect(() => {
+    if (mounted && isLoaded && isSignedIn) {
+      router.replace(redirectUrl)
+    }
+  }, [mounted, isLoaded, isSignedIn, redirectUrl, router])
+
   if (!mounted || !isLoaded) {
     return (
       <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
@@ -22,22 +32,11 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
-      <SignedOut>
-        <SignIn
-          appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }}
-          afterSignInUrl="/"
-          redirectUrl="/"
-        />
-      </SignedOut>
-      <SignedIn>
-        {/* Added homepage link for already signed in users */}
-        <div className="text-center space-y-4">
-          <div className="text-sm text-muted-foreground">You are already signed in.</div>
-          <a href="/" className="text-blue-600 hover:underline text-sm">
-            Go to Homepage
-          </a>
-        </div>
-      </SignedIn>
+      <SignIn
+        appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }}
+        afterSignInUrl={redirectUrl}
+        redirectUrl={redirectUrl}
+      />
     </div>
   )
 }
