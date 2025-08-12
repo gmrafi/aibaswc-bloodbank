@@ -15,6 +15,9 @@ import { Eye, MoreVertical, Trash2, CheckCheck, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/hooks/use-role"
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
+import dynamic from "next/dynamic"
+
+const MapboxMap = dynamic(() => import("@/components/mapbox-map"), { ssr: false })
 
 export default function RequestTable() {
   const { state, addRequest, updateRequest, deleteRequest } = useBlood()
@@ -330,6 +333,11 @@ function RequestDetails({
             {request.contactPhone2 ? `, ${request.contactPhone2}` : ""}
             {")"}
           </div>
+          {request.latitude != null && request.longitude != null && (
+            <div className="mt-3">
+              <MapboxMap latitude={request.latitude as any} longitude={request.longitude as any} height={200} zoom={13} interactive={false} />
+            </div>
+          )}
           {request.notes && <div className="text-sm mt-2">{request.notes}</div>}
         </div>
         <div className="rounded-md border p-3 bg-white">

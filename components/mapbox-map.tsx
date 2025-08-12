@@ -14,9 +14,10 @@ export type MapboxMapProps = {
   onChange?: (coords: { latitude: number; longitude: number }) => void
   height?: number | string
   zoom?: number
+  interactive?: boolean
 }
 
-export default function MapboxMap({ latitude, longitude, onChange, height = 320, zoom = 12 }: MapboxMapProps) {
+export default function MapboxMap({ latitude, longitude, onChange, height = 320, zoom = 12, interactive = true }: MapboxMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [ready, setReady] = useState(false)
   const [marker, setMarker] = useState<any>(null)
@@ -73,9 +74,20 @@ export default function MapboxMap({ latitude, longitude, onChange, height = 320,
       attributionControl: true,
     })
 
-    // Add controls
+    // Controls
     map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }))
     map.addControl(new mapboxgl.ScaleControl())
+
+    // Disable interactions if needed
+    if (!interactive) {
+      map.scrollZoom.disable()
+      map.boxZoom.disable()
+      map.dragRotate.disable()
+      map.dragPan.disable()
+      map.keyboard.disable()
+      map.doubleClickZoom.disable()
+      map.touchZoomRotate.disable()
+    }
 
     // Marker setup
     const m = new mapboxgl.Marker({ draggable: false })
@@ -84,7 +96,7 @@ export default function MapboxMap({ latitude, longitude, onChange, height = 320,
     }
     setMarker(m)
 
-    // Click to place marker
+    // Click to place marker (only if interactive)
     const onClick = (e: any) => {
       const { lng, lat } = e.lngLat
       if (m) {
@@ -92,13 +104,15 @@ export default function MapboxMap({ latitude, longitude, onChange, height = 320,
       }
       onChange?.({ latitude: lat, longitude: lng })
     }
-    map.on('click', onClick)
+    if (interactive) {
+      map.on('click', onClick)
+    }
 
     return () => {
-      map.off('click', onClick)
+      if (interactive) map.off('click', onClick)
       map.remove()
     }
-  }, [ready])
+  }, [ready, interactive])
 
   return (
     <div
