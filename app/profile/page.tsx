@@ -1,4 +1,5 @@
 "use client"
+export const dynamic = "force-dynamic"
 
 import { useState, useEffect } from "react"
 import { useUser } from "@clerk/nextjs"
@@ -98,14 +99,14 @@ export default function ProfilePage() {
                   </p>
                   <div className="flex flex-col gap-3">
                     <Button 
-                      onClick={() => window.location.href = '/sign-in'}
+                      onClick={() => window.location.href = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/sign-in'}
                       className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                     >
                       Sign In
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => window.location.href = '/sign-up'}
+                      onClick={() => window.location.href = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || '/sign-up'}
                       className="w-full"
                     >
                       Create Account

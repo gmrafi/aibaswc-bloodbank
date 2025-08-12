@@ -1,4 +1,6 @@
 "use client"
+export const dynamic = "force-dynamic"
+
 import AppProviders from "@/components/app-providers"
 import LayoutShell from "@/components/layout-shell"
 import DonorTable from "@/components/donor-table"

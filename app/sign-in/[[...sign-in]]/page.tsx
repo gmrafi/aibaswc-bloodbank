@@ -8,6 +8,7 @@ export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = searchParams.get("redirect_url") || "/profile"
+  const portalUrl = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL
   const { isLoaded, isSignedIn } = useUser()
   const [mounted, setMounted] = useState(false)
 
@@ -15,12 +16,16 @@ export default function SignInPage() {
     setMounted(true)
   }, [])
 
-  // If already signed in, go to the intended page immediately
   useEffect(() => {
     if (mounted && isLoaded && isSignedIn) {
       router.replace(redirectUrl)
     }
   }, [mounted, isLoaded, isSignedIn, redirectUrl, router])
+
+  if (portalUrl) {
+    if (mounted) window.location.href = `${portalUrl}?redirect_url=${encodeURIComponent(redirectUrl)}`
+    return null
+  }
 
   if (!mounted || !isLoaded) {
     return (
