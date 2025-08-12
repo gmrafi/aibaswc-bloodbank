@@ -18,7 +18,7 @@ A comprehensive blood bank management system built for university welfare clubs 
 - **Enhanced Experience**: Logged-in users get personalized dashboard and history
 - **Role Recognition**: System recognizes super admin for advanced management features
 
-### Super Admin Features (mubasshirrafi20@gmail.com)
+### Super Admin Features 
 - **Delete Operations**: Only the super admin can delete donors and requests from the system
 - **System Health**: Monitor database connectivity and system status
 - **Advanced Management**: Access to system-wide controls and maintenance features
