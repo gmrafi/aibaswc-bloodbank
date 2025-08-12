@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { SignedIn, SignedOut, SignIn, useUser } from "@clerk/nextjs"
+import { useUser } from "@clerk/nextjs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -52,11 +52,65 @@ type CampusProfile = {
 
 export default function ProfilePage() {
   const [mounted, setMounted] = useState(false)
+  const [authError, setAuthError] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { isLoaded, isSignedIn, user } = useUser()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Handle authentication errors gracefully
+  useEffect(() => {
+    if (isLoaded && !isSignedIn && mounted) {
+      // Small delay to prevent flash of content
+      const timer = setTimeout(() => {
+        setAuthError(true)
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isLoaded, isSignedIn, mounted])
+
+  // Error boundary for production
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <Header />
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
+          <div className="grid place-items-center min-h-[60vh]">
+            <Card className="w-full max-w-md shadow-xl">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl font-bold text-red-800">Something Went Wrong</CardTitle>
+                <p className="text-gray-600">We encountered an error loading your profile</p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center space-y-4">
+                  <p className="text-sm text-gray-600">
+                    {error}
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={() => window.location.reload()}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Try Again
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.location.href = '/'}
+                      className="w-full"
+                    >
+                      Go to Homepage
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Show loading state until mounted and Clerk is loaded
   if (!mounted || !isLoaded) {
@@ -76,8 +130,8 @@ export default function ProfilePage() {
     )
   }
 
-  // Handle authentication error state
-  if (isLoaded && !isSignedIn) {
+  // Handle authentication error state - more robust check
+  if (!isSignedIn || !user || authError) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <Header />
@@ -89,12 +143,26 @@ export default function ProfilePage() {
                 <p className="text-gray-600">Sign in to manage your blood donation profile</p>
               </CardHeader>
               <CardContent className="space-y-4">
-                <SignIn appearance={{ 
-                  elements: { 
-                    formButtonPrimary: "bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors",
-                    card: "shadow-none border-0"
-                  } 
-                }} />
+                <div className="text-center space-y-4">
+                  <p className="text-sm text-gray-600">
+                    You need to be signed in to access your profile.
+                  </p>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={() => window.location.href = '/sign-in'}
+                      className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                    >
+                      Sign In
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => window.location.href = '/sign-up'}
+                      className="w-full"
+                    >
+                      Create Account
+                    </Button>
+                  </div>
+                </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-500 mb-2">Having trouble signing in?</p>
                   <div className="flex gap-2 justify-center">
@@ -105,13 +173,6 @@ export default function ProfilePage() {
                     >
                       <Home className="w-4 h-4 mr-2" />
                       Go to Homepage
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.location.href = '/sign-up'}
-                    >
-                      Create Account
                     </Button>
                   </div>
                 </div>
@@ -140,7 +201,7 @@ export default function ProfilePage() {
 }
 
 function Header() {
-  const { user, isSignedIn } = useUser()
+  const { user, isSignedIn, isLoaded } = useUser()
   const { role } = useRole()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -155,6 +216,9 @@ function Header() {
     // Simple redirect to Clerk's sign-out page
     window.location.href = '/sign-out'
   }
+
+  // Don't show user info until Clerk is fully loaded
+  const showUserInfo = isLoaded && isSignedIn && user
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-sm border-b">
@@ -189,7 +253,7 @@ function Header() {
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
-            {isSignedIn && user && (
+            {showUserInfo && (
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">{user.fullName}</p>
@@ -230,7 +294,7 @@ function Header() {
                 </Link>
               ))}
               
-              {isSignedIn && user && (
+              {showUserInfo && (
                 <>
                   <Separator className="my-3" />
                   <div className="px-4 py-3">
@@ -270,21 +334,50 @@ function ProfileHero() {
   const { role, loading: roleLoading } = useRole()
   const [profileData, setProfileData] = useState<CampusProfile>({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        setError(null)
         const res = await fetch("/api/profile")
+        if (!res.ok) {
+          throw new Error(`Failed to fetch profile: ${res.status}`)
+        }
         const json = await res.json()
         setProfileData(json ?? {})
       } catch (error) {
         console.error("Profile fetch error:", error)
+        setError(error instanceof Error ? error.message : "Failed to load profile")
       } finally {
         setLoading(false)
       }
     }
     fetchProfile()
   }, [])
+
+  // Show error state if profile fetch failed
+  if (error && !loading) {
+    return (
+      <Card className="overflow-hidden shadow-xl border-0 bg-gradient-to-r from-red-600 via-red-500 to-red-600">
+        <div className="p-6 sm:p-8 text-white">
+          <div className="text-center space-y-4">
+            <AlertCircle className="w-16 h-16 mx-auto text-red-200" />
+            <h2 className="text-2xl font-bold">Profile Loading Error</h2>
+            <p className="text-red-100">{error}</p>
+            <Button 
+              variant="outline" 
+              className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+              onClick={() => window.location.reload()}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </Card>
+    )
+  }
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -369,7 +462,7 @@ function ProfileHero() {
             </div>
 
             {profileData.bloodGroup && (
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                   isEligibleForDonation ? 'bg-green-500/20' : 'bg-yellow-500/20'
                 }`}>
