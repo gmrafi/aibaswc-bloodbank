@@ -12,7 +12,6 @@ export async function GET() {
     data
       ? {
           batch: data.batch ?? undefined,
-          department: data.department ?? undefined,
           phone1: data.phone1 ?? undefined,
           phone2: data.phone2 ?? undefined,
           bloodGroup: data.blood_group ?? undefined,
@@ -29,7 +28,6 @@ export async function PUT(req: Request) {
   const upsert = {
     clerk_user_id: userId,
     batch: payload.batch ?? null,
-    department: payload.department ?? null,
     phone1: payload.phone1 ?? null,
     phone2: payload.phone2 ?? null,
     blood_group: payload.bloodGroup ?? null,

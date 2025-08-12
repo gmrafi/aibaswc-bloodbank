@@ -12,9 +12,23 @@ import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/hooks/use-role"
 import { Badge } from "@/components/ui/badge"
 
+const BATCH_OPTIONS = [
+  "BBA 1",
+  "BBA 2",
+  "BBA 3",
+  "MBA 1",
+  "MBA 2",
+  "CSE 1",
+  "CSE 2",
+  "CSE 3",
+  "EEE 1",
+  "EEE 2",
+  "EEE 3",
+  "Other",
+]
+
 type CampusProfile = {
   batch?: string
-  department?: string
   phone1?: string
   phone2?: string
   bloodGroup?: BloodGroup
@@ -135,23 +149,22 @@ function CampusProfileCard() {
         <div className="grid md:grid-cols-2 gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="batch">Batch</Label>
-            <Input
-              id="batch"
+            <Select
               value={data.batch ?? ""}
-              onChange={(e) => setData((d) => ({ ...d, batch: e.target.value }))}
+              onValueChange={(v) => setData((d) => ({ ...d, batch: v }))}
               disabled={loading}
-              placeholder="e.g., 2023"
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="department">Department</Label>
-            <Input
-              id="department"
-              value={data.department ?? ""}
-              onChange={(e) => setData((d) => ({ ...d, department: e.target.value }))}
-              disabled={loading}
-              placeholder="e.g., CSE"
-            />
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select batch" />
+              </SelectTrigger>
+              <SelectContent>
+                {BATCH_OPTIONS.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <div className="grid md:grid-cols-2 gap-3">

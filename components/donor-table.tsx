@@ -23,13 +23,13 @@ export default function DonorTable() {
   const [query, setQuery] = useState("")
   const [group, setGroup] = useState<string>("all")
   const [availability, setAvailability] = useState<string>("all")
-  const [department, setDepartment] = useState<string>("all")
+  const [batch, setBatch] = useState<string>("all")
   const { toast } = useToast()
   const { role } = useRole()
   const canDeleteDonors = role === "superadmin"
 
-  const departments = useMemo(() => {
-    const set = new Set(state.donors.map((d) => d.department).filter(Boolean))
+  const batches = useMemo(() => {
+    const set = new Set(state.donors.map((d) => d.batch).filter(Boolean))
     return ["all", ...Array.from(set)]
   }, [state.donors])
 
@@ -46,10 +46,10 @@ export default function DonorTable() {
       const matchesGroup = group === "all" || d.bloodGroup === group
       const eligible = isEligible(d.lastDonation ?? null, d.willing)
       const matchesAvail = availability === "all" ? true : availability === "eligible" ? eligible : !eligible
-      const matchesDept = department === "all" ? true : d.department === department
-      return matchesQ && matchesGroup && matchesAvail && matchesDept
+      const matchesBatch = batch === "all" ? true : d.batch === batch
+      return matchesQ && matchesGroup && matchesAvail && matchesBatch
     })
-  }, [state.donors, query, group, availability, department])
+  }, [state.donors, query, group, availability, batch])
 
   const [editing, setEditing] = useState<Donor | null>(null)
   const [editOpen, setEditOpen] = useState(false)
@@ -123,14 +123,14 @@ export default function DonorTable() {
               <SelectItem value="not">Not eligible</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={department} onValueChange={setDepartment}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Department" />
+          <Select value={batch} onValueChange={setBatch}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Batch" />
             </SelectTrigger>
             <SelectContent>
-              {departments.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d === "all" ? "All departments" : d}
+              {batches.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {b === "all" ? "All batches" : b}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -146,7 +146,6 @@ export default function DonorTable() {
               <TableHead>Name</TableHead>
               <TableHead>Batch</TableHead>
               <TableHead className="whitespace-nowrap">Student ID</TableHead>
-              <TableHead>Department</TableHead>
               <TableHead className="whitespace-nowrap">Blood Group</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead className="whitespace-nowrap">Last Donation</TableHead>
@@ -167,7 +166,6 @@ export default function DonorTable() {
                   </TableCell>
                   <TableCell>{d.batch}</TableCell>
                   <TableCell>{d.studentId}</TableCell>
-                  <TableCell>{d.department}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">{d.bloodGroup}</Badge>
                   </TableCell>
@@ -237,7 +235,7 @@ export default function DonorTable() {
             })}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   No donors found.
                 </TableCell>
               </TableRow>
