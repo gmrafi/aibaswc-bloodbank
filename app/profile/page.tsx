@@ -39,6 +39,7 @@ import {
   X
 } from "lucide-react"
 import Link from "next/link"
+import { RealTimeNotifications } from "@/components/real-time-notifications"
 
 type CampusProfile = {
   batch?: string
@@ -253,6 +254,9 @@ function Header() {
 
           {/* User Menu */}
           <div className="flex items-center gap-3">
+            {/* Real-time Notifications */}
+            <RealTimeNotifications />
+            
             {showUserInfo && (
               <div className="hidden sm:flex items-center gap-3">
                 <div className="text-right">
