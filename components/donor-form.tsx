@@ -10,6 +10,21 @@ import { Switch } from "@/components/ui/switch"
 import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
 import type { Donor } from "./blood-context"
 
+const BATCH_OPTIONS = [
+  "BBA 1",
+  "BBA 2",
+  "BBA 3",
+  "MBA 1",
+  "MBA 2",
+  "CSE 1",
+  "CSE 2",
+  "CSE 3",
+  "EEE 1",
+  "EEE 2",
+  "EEE 3",
+  "Other",
+]
+
 type Props = {
   donor?: Donor | null
   onSubmit?: (data: Omit<Donor, "id" | "createdAt"> & Partial<Pick<Donor, "id" | "createdAt">>) => Promise<void> | void
@@ -21,7 +36,6 @@ export default function DonorForm(props: Props) {
   const [name, setName] = useState(donor?.name ?? "")
   const [batch, setBatch] = useState(donor?.batch ?? "")
   const [studentId, setStudentId] = useState(donor?.studentId ?? "")
-  const [department, setDepartment] = useState(donor?.department ?? "")
   const [bloodGroup, setBloodGroup] = useState<BloodGroup>((donor?.bloodGroup as BloodGroup) ?? "O+")
   const [phone, setPhone] = useState(donor?.phone ?? "")
   const [phone2, setPhone2] = useState(donor?.phone2 ?? "")
@@ -40,7 +54,6 @@ export default function DonorForm(props: Props) {
       setName(donor.name)
       setBatch(donor.batch)
       setStudentId(donor.studentId)
-      setDepartment(donor.department)
       setBloodGroup(donor.bloodGroup)
       setPhone(donor.phone)
       setPhone2(donor.phone2 ?? "")
@@ -53,8 +66,8 @@ export default function DonorForm(props: Props) {
   }, [donor])
 
   const canSubmit = useMemo(() => {
-    return name.trim() && studentId.trim() && department.trim() && phone.trim()
-  }, [name, studentId, department, phone])
+    return name.trim() && studentId.trim() && batch.trim() && phone.trim()
+  }, [name, studentId, batch, phone])
 
   return (
     <form
@@ -63,7 +76,7 @@ export default function DonorForm(props: Props) {
         e.preventDefault()
         setError(null)
         if (!canSubmit) {
-          setError("Please fill name, student ID, department, and phone.")
+          setError("Please fill name, student ID, batch, and phone.")
           return
         }
         try {
@@ -74,7 +87,6 @@ export default function DonorForm(props: Props) {
             name: name.trim(),
             batch: batch.trim(),
             studentId: studentId.trim(),
-            department: department.trim(),
             bloodGroup,
             phone: phone.trim(),
             phone2: phone2.trim() || undefined,
@@ -103,7 +115,18 @@ export default function DonorForm(props: Props) {
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="batch">Batch</Label>
-          <Input id="batch" value={batch} onChange={(e) => setBatch(e.target.value)} placeholder="e.g., 23rd" />
+          <Select value={batch} onValueChange={setBatch}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select batch" />
+            </SelectTrigger>
+            <SelectContent>
+              {BATCH_OPTIONS.map((b) => (
+                <SelectItem key={b} value={b}>
+                  {b}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor="studentId">Student ID</Label>
@@ -111,10 +134,6 @@ export default function DonorForm(props: Props) {
         </div>
       </div>
       <div className="grid md:grid-cols-3 gap-3">
-        <div className="grid gap-1.5">
-          <Label htmlFor="department">Department</Label>
-          <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} required />
-        </div>
         <div className="grid gap-1.5">
           <Label>Blood Group</Label>
           <Select value={bloodGroup} onValueChange={(v) => setBloodGroup(v as BloodGroup)}>

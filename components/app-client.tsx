@@ -1,31 +1,68 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useUser } from "@clerk/nextjs"
+import type React from "react"
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useState, useEffect } from "react"
 
-interface AppClientProps {
-  children: React.ReactNode
-}
-
-export default function AppClient({ children }: AppClientProps) {
-  const [mounted, setMounted] = useState(false)
-  const { isLoaded } = useUser()
+export default function AppClient({ children }: { children?: React.ReactNode }) {
+  const [clerkError, setClerkError] = useState<string | null>(null)
 
   useEffect(() => {
-    setMounted(true)
+    const handleError = (event: ErrorEvent) => {
+      if (event.error?.message?.includes("Production Keys are only allowed for domain")) {
+        setClerkError("Authentication is not available in preview mode. This is normal for development.")
+      }
+    }
+
+    window.addEventListener("error", handleError)
+    return () => window.removeEventListener("error", handleError)
   }, [])
 
-  // Prevent hydration mismatch by showing loading state until mounted
-  if (!mounted || !isLoaded) {
+  if (clerkError) {
     return (
       <div className="min-h-screen grid place-items-center bg-gray-50">
-        <div className="space-y-4 text-center">
-          <div className="h-8 w-32 rounded bg-gray-200 animate-pulse mx-auto" />
-          <div className="h-4 w-48 rounded bg-gray-200 animate-pulse mx-auto" />
-        </div>
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Campus Blood Bank</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">{clerkError}</p>
+            <p className="text-xs text-muted-foreground">
+              The app will work normally when deployed to the production domain.
+            </p>
+            {children && (
+              <div className="pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-2">Preview mode (authentication disabled):</p>
+                {children}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
-  return <>{children}</>
+  return (
+    <>
+      <SignedIn>{children}</SignedIn>
+      <SignedOut>
+        <div className="min-h-screen grid place-items-center bg-gray-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Campus Blood Bank</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">Please sign in to manage donors and requests.</p>
+              <SignInButton mode="modal">
+                <button className="inline-flex h-9 items-center justify-center rounded-md bg-black px-4 text-sm font-medium text-white hover:bg-black/90">
+                  Sign in with Clerk
+                </button>
+              </SignInButton>
+            </CardContent>
+          </Card>
+        </div>
+      </SignedOut>
+    </>
+  )
 }

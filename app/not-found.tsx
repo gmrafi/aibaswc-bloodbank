@@ -3,8 +3,11 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Home, User } from "lucide-react"
+import { useRole } from "@/hooks/use-role"
 
 export default function NotFound() {
+  const { isAdmin, loading } = useRole()
+
   return (
     <div className="min-h-[60vh] grid place-items-center p-6">
       <div className="max-w-lg text-center space-y-4">
@@ -23,15 +26,19 @@ export default function NotFound() {
               <User className="size-4 mr-2" /> Profile
             </Button>
           </Link>
-          <Link href="/donors">
-            <Button variant="outline">Donors</Button>
-          </Link>
-          <Link href="/requests">
-            <Button variant="outline">Requests</Button>
-          </Link>
-          <Link href="/admin">
-            <Button variant="secondary">Admin Portal</Button>
-          </Link>
+          {!loading && isAdmin && (
+            <>
+              <Link href="/donors">
+                <Button variant="outline">Donors</Button>
+              </Link>
+              <Link href="/requests">
+                <Button variant="outline">Requests</Button>
+              </Link>
+              <Link href="/admin">
+                <Button variant="secondary">Admin Portal</Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

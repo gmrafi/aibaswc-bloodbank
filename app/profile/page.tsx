@@ -1,151 +1,222 @@
 "use client"
-export const dynamic = "force-dynamic"
 
-import { useState, useEffect } from "react"
-import { useUser } from "@clerk/nextjs"
-import { Home, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
+import { SignedIn, SignedOut, SignIn, UserProfile, useUser } from "@clerk/nextjs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Header } from "@/components/layout-shell"
-import { Breadcrumb } from "@/components/layout-shell"
-import { ProfileHero } from "@/components/profile-hero"
-import { AccountProfileCard } from "@/components/account-profile-card"
-import { CampusProfileCard } from "@/components/campus-profile-card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/hooks/use-toast"
+import { useRole } from "@/hooks/use-role"
+import { Badge } from "@/components/ui/badge"
+
+const BATCH_OPTIONS = [
+  "BBA 1",
+  "BBA 2",
+  "BBA 3",
+  "MBA 1",
+  "MBA 2",
+  "CSE 1",
+  "CSE 2",
+  "CSE 3",
+  "EEE 1",
+  "EEE 2",
+  "EEE 3",
+  "Other",
+]
+
+type CampusProfile = {
+  batch?: string
+  phone1?: string
+  phone2?: string
+  bloodGroup?: BloodGroup
+}
 
 export default function ProfilePage() {
   const [mounted, setMounted] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const { isLoaded, isSignedIn, user } = useUser()
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Show loading state while Clerk is loading or component is mounting
-  if (!mounted || !isLoaded) {
+  if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="h-16 bg-white shadow-sm border-b" />
-        <div className="p-4">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="h-32 rounded-xl bg-gray-200 animate-pulse" />
-            <div className="grid gap-6 lg:grid-cols-2">
-              <div className="h-96 rounded-xl bg-gray-200 animate-pulse" />
-              <div className="h-96 rounded-xl bg-gray-200 animate-pulse" />
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
+        <div className="h-8 w-32 rounded bg-gray-200 animate-pulse" />
       </div>
     )
   }
 
-  // Show error state if there's a global error
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <Header />
-        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
-          <div className="grid place-items-center min-h-[60vh]">
-            <Card className="w-full max-w-md shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-red-800">Something Went Wrong</CardTitle>
-                <p className="text-gray-600">We encountered an error loading your profile</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center space-y-4">
-                  <p className="text-sm text-gray-600">
-                    {error}
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <Button 
-                      onClick={() => window.location.reload()}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Try Again
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.location.href = '/'}
-                      className="w-full"
-                    >
-                      Go to Homepage
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show sign-in prompt if user is not authenticated
-  if (!isSignedIn || !user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <Header />
-        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
-          <div className="grid place-items-center min-h-[60vh]">
-            <Card className="w-full max-w-md shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl font-bold text-gray-800">Access Your Profile</CardTitle>
-                <p className="text-gray-600">Sign in to manage your blood donation profile</p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center space-y-4">
-                  <p className="text-sm text-gray-600">
-                    You need to be signed in to access your profile.
-                  </p>
-                  <div className="flex flex-col gap-3">
-                    <Button 
-                      onClick={() => window.location.href = process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL || '/sign-in'}
-                      className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                    >
-                      Sign In
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => window.location.href = process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL || '/sign-up'}
-                      className="w-full"
-                    >
-                      Create Account
-                    </Button>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-2">Having trouble signing in?</p>
-                  <div className="flex gap-2 justify-center">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => window.location.href = '/'}
-                    >
-                      <Home className="w-4 h-4 mr-2" />
-                      Go to Homepage
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show the main profile content for authenticated users
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Header />
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pt-20">
-        <Breadcrumb />
-        <ProfileHero />
-        <div className="grid gap-6 lg:grid-cols-2">
-          <AccountProfileCard />
-          <CampusProfileCard />
+    <>
+      <SignedOut>
+        <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
+          <SignIn appearance={{ elements: { formButtonPrimary: "bg-black hover:bg-black/90" } }} />
         </div>
-      </div>
-    </div>
+      </SignedOut>
+      <SignedIn>
+        <div className="min-h-screen bg-white">
+          <div className="mx-auto max-w-6xl p-4 sm:p-8 grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Profile</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2 sm:p-4">
+                <UserProfile
+                  appearance={{
+                    elements: { card: "shadow-none border-0", formButtonPrimary: "bg-black hover:bg-black/90" },
+                  }}
+                />
+              </CardContent>
+            </Card>
+            <CampusProfileCard />
+          </div>
+        </div>
+      </SignedIn>
+    </>
+  )
+}
+
+function CampusProfileCard() {
+  const { user } = useUser()
+  const { role, loading: roleLoading } = useRole()
+  const { toast } = useToast()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [data, setData] = useState<CampusProfile>({})
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      try {
+        const res = await fetch("/api/profile")
+        const json = await res.json()
+        if (active) setData(json ?? {})
+      } catch (error) {
+        console.error("Profile fetch error:", error)
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const syncFromAccount = () => {
+    const primaryEmail = user?.primaryEmailAddress?.emailAddress
+    const phoneNumber = user?.primaryPhoneNumber?.phoneNumber
+    setData((d) => ({
+      ...d,
+      phone1: d.phone1 || phoneNumber || "",
+      // bloodGroup not in Clerk profile; left as-is
+    }))
+  }
+
+  const save = async () => {
+    try {
+      setSaving(true)
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      })
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || "Failed")
+      }
+      toast({ title: "Saved", description: "Campus profile updated." })
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e?.message ?? "Unknown error", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Campus Profile</CardTitle>
+        {!roleLoading && (
+          <Badge variant={role === "superadmin" ? "default" : role === "admin" ? "secondary" : "outline"}>
+            {role === "superadmin" ? "Super Admin" : role === "admin" ? "Admin" : "User"}
+          </Badge>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="batch">Batch</Label>
+            <Select
+              value={data.batch ?? ""}
+              onValueChange={(v) => setData((d) => ({ ...d, batch: v }))}
+              disabled={loading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select batch" />
+              </SelectTrigger>
+              <SelectContent>
+                {BATCH_OPTIONS.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="phone1">Phone 1</Label>
+            <Input
+              id="phone1"
+              value={data.phone1 ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, phone1: e.target.value }))}
+              disabled={loading}
+              placeholder="Primary phone number"
+            />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="phone2">Phone 2</Label>
+            <Input
+              id="phone2"
+              value={data.phone2 ?? ""}
+              onChange={(e) => setData((d) => ({ ...d, phone2: e.target.value }))}
+              disabled={loading}
+              placeholder="Secondary phone number"
+            />
+          </div>
+        </div>
+        <div className="grid gap-1.5">
+          <Label>Blood Group</Label>
+          <Select
+            value={data.bloodGroup ?? ""}
+            onValueChange={(v) => setData((d) => ({ ...d, bloodGroup: v as BloodGroup }))}
+            disabled={loading}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select blood group" />
+            </SelectTrigger>
+            <SelectContent>
+              {BLOOD_GROUPS.map((g) => (
+                <SelectItem key={g} value={g}>
+                  {g}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={syncFromAccount} disabled={loading || saving}>
+            Sync from account
+          </Button>
+          <Button onClick={save} disabled={saving || loading}>
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

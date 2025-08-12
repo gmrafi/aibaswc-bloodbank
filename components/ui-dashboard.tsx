@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BLOOD_GROUPS, isEligible } from "@/lib/compatibility"
@@ -8,27 +8,8 @@ import { useBlood } from "./blood-context"
 
 export default function Dashboard() {
   const { state } = useBlood()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const stats = useMemo(() => {
-    // Don't calculate until mounted to prevent hydration mismatch
-    if (!mounted) {
-      return {
-        total: 0,
-        eligible: 0,
-        open: 0,
-        fulfilled: 0,
-        byGroup: BLOOD_GROUPS.reduce<Record<string, { total: number; eligible: number }>>((acc, g) => {
-          acc[g] = { total: 0, eligible: 0 }
-          return acc
-        }, {})
-      }
-    }
-
     const total = state.donors.length
     const eligible = state.donors.filter((d) => isEligible(d.lastDonation ?? null, d.willing)).length
     const open = state.requests.filter((r) => r.status === "open").length
@@ -42,37 +23,14 @@ export default function Dashboard() {
     }, {})
 
     return { total, eligible, open, fulfilled, byGroup }
-  }, [state, mounted])
+  }, [state])
 
   const upcoming = useMemo(() => {
-    if (!mounted) return []
-    
     return state.requests
       .filter((r) => r.status === "open")
       .sort((a, b) => a.neededBy.localeCompare(b.neededBy))
       .slice(0, 5)
-  }, [state.requests, mounted])
-
-  // Show loading state until mounted
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="h-6 w-24 rounded bg-gray-200 animate-pulse" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 w-16 rounded bg-gray-200 animate-pulse" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="h-64 rounded bg-gray-200 animate-pulse" />
-      </div>
-    )
-  }
+  }, [state.requests])
 
   return (
     <div className="space-y-4">

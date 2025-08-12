@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useBlood } from "./blood-context"
 import type { BloodRequest, Donor } from "./blood-context"
 import { isCompatible, isEligible } from "@/lib/compatibility"
@@ -15,9 +15,6 @@ import { Eye, MoreVertical, Trash2, CheckCheck, Copy } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useRole } from "@/hooks/use-role"
 import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"
-import dynamic from "next/dynamic"
-
-const MapboxMap = dynamic(() => import("@/components/mapbox-map"), { ssr: false })
 
 export default function RequestTable() {
   const { state, addRequest, updateRequest, deleteRequest } = useBlood()
@@ -26,16 +23,8 @@ export default function RequestTable() {
   const canDeleteRequests = role === "superadmin"
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<"all" | "open" | "fulfilled" | "cancelled">("all")
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const filtered = useMemo(() => {
-    // Don't filter until mounted to prevent hydration mismatch
-    if (!mounted) return []
-    
     return state.requests.filter((r) => {
       const q = query.trim().toLowerCase()
       const matchesQ =
@@ -49,7 +38,7 @@ export default function RequestTable() {
       const matchesS = status === "all" ? true : r.status === status
       return matchesQ && matchesS
     })
-  }, [state.requests, query, status, mounted])
+  }, [state.requests, query, status])
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<BloodRequest | null>(null)
@@ -59,22 +48,6 @@ export default function RequestTable() {
     navigator.clipboard.writeText(phones).then(() => {
       toast({ title: "Copied", description: "Phone numbers copied to clipboard." })
     })
-  }
-
-  // Show loading state until mounted
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border bg-white p-4">
-          <div className="h-6 w-32 rounded bg-gray-200 animate-pulse mb-2" />
-          <div className="space-y-3">
-            <div className="h-10 rounded bg-gray-200 animate-pulse" />
-            <div className="h-10 rounded bg-gray-200 animate-pulse" />
-          </div>
-        </div>
-        <div className="h-64 rounded bg-gray-200 animate-pulse" />
-      </div>
-    )
   }
 
   return (
@@ -333,11 +306,6 @@ function RequestDetails({
             {request.contactPhone2 ? `, ${request.contactPhone2}` : ""}
             {")"}
           </div>
-          {request.latitude != null && request.longitude != null && (
-            <div className="mt-3">
-              <MapboxMap latitude={request.latitude as any} longitude={request.longitude as any} height={200} zoom={13} interactive={false} />
-            </div>
-          )}
           {request.notes && <div className="text-sm mt-2">{request.notes}</div>}
         </div>
         <div className="rounded-md border p-3 bg-white">

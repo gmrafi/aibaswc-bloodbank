@@ -46,7 +46,7 @@ export default function PublicLanding() {
           <Feature
             icon={<Users className="size-5 text-red-600" />}
             title="Donor Directory"
-            desc="Organize donors by blood group, department, and eligibility."
+            desc="Organize donors by blood group, batch, and eligibility."
           />
           <Feature
             icon={<ClipboardList className="size-5 text-red-600" />}

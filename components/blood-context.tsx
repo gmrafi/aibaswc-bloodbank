@@ -10,7 +10,6 @@ export type Donor = {
   name: string
   batch: string
   studentId: string
-  department: string
   bloodGroup: BloodGroup
   phone: string
   phone2?: string

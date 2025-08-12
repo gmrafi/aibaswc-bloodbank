@@ -1,5 +1,4 @@
 "use client"
-export const dynamic = "force-dynamic"
 
 import { useEffect, useState } from "react"
 import { SignedOut, SignIn, useUser } from "@clerk/nextjs"
@@ -11,7 +10,6 @@ import { useRole } from "@/hooks/use-role"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Shield, Users, ClipboardList } from "lucide-react"
-import AdminSuperadmins from "@/components/admin-superadmins"
 
 export default function AdminPage() {
   const { isLoaded, isSignedIn } = useUser()
@@ -97,10 +95,8 @@ export default function AdminPage() {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2">
               <Dashboard />
-              {/* Superadmin management panel */}
-              <AdminSuperadmins />
             </div>
             <div>
               <SystemStatus />
