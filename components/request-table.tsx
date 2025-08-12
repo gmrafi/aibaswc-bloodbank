@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useBlood } from "./blood-context"
 import type { BloodRequest, Donor } from "./blood-context"
 import { isCompatible, isEligible } from "@/lib/compatibility"
@@ -23,8 +23,16 @@ export default function RequestTable() {
   const canDeleteRequests = role === "superadmin"
   const [query, setQuery] = useState("")
   const [status, setStatus] = useState<"all" | "open" | "fulfilled" | "cancelled">("all")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const filtered = useMemo(() => {
+    // Don't filter until mounted to prevent hydration mismatch
+    if (!mounted) return []
+    
     return state.requests.filter((r) => {
       const q = query.trim().toLowerCase()
       const matchesQ =
@@ -38,7 +46,7 @@ export default function RequestTable() {
       const matchesS = status === "all" ? true : r.status === status
       return matchesQ && matchesS
     })
-  }, [state.requests, query, status])
+  }, [state.requests, query, status, mounted])
 
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<BloodRequest | null>(null)
@@ -48,6 +56,22 @@ export default function RequestTable() {
     navigator.clipboard.writeText(phones).then(() => {
       toast({ title: "Copied", description: "Phone numbers copied to clipboard." })
     })
+  }
+
+  // Show loading state until mounted
+  if (!mounted) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border bg-white p-4">
+          <div className="h-6 w-32 rounded bg-gray-200 animate-pulse mb-2" />
+          <div className="space-y-3">
+            <div className="h-10 rounded bg-gray-200 animate-pulse" />
+            <div className="h-10 rounded bg-gray-200 animate-pulse" />
+          </div>
+        </div>
+        <div className="h-64 rounded bg-gray-200 animate-pulse" />
+      </div>
+    )
   }
 
   return (

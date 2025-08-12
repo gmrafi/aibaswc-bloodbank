@@ -6,7 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs"
 export const metadata: Metadata = {
   title: "Army IBA Social Welfare Club Blood Bank",
   description: "Manage donors and requests for the Army IBA Social Welfare Club.",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -16,8 +16,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 
   return (
     <ClerkProvider publishableKey={publishableKey} signInUrl="/sign-in" signUpUrl="/sign-up">
-      <html lang="en">
-        <body>{children}</body>
+      <html lang="en" suppressHydrationWarning>
+        <body suppressHydrationWarning>{children}</body>
       </html>
     </ClerkProvider>
   )

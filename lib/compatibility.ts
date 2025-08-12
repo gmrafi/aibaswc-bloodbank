@@ -28,11 +28,22 @@ export function daysBetween(aISO?: string | null, bISO?: string | null) {
 
 export function daysSince(dateISO?: string | null) {
   if (!dateISO) return Number.POSITIVE_INFINITY
+  // Use a stable reference to avoid hydration mismatches
+  // This function should only be called on the client side
+  if (typeof window === 'undefined') {
+    return Number.POSITIVE_INFINITY // Return safe default on server
+  }
   return daysBetween(dateISO, new Date().toISOString())
 }
 
 export function nextEligibleDate(lastDonation?: string | null, minDays = 56) {
-  if (!lastDonation) return new Date()
+  if (!lastDonation) {
+    // Return a stable date on server to prevent hydration mismatch
+    if (typeof window === 'undefined') {
+      return new Date('2024-01-01') // Stable fallback for SSR
+    }
+    return new Date()
+  }
   const d = new Date(lastDonation)
   d.setDate(d.getDate() + minDays)
   return d
@@ -41,5 +52,9 @@ export function nextEligibleDate(lastDonation?: string | null, minDays = 56) {
 export function isEligible(lastDonation?: string | null, willing = true, minDays = 56) {
   if (!willing) return false
   if (!lastDonation) return true
+  // Only calculate on client side to prevent hydration mismatch
+  if (typeof window === 'undefined') {
+    return true // Safe default for SSR
+  }
   return daysSince(lastDonation) >= minDays
 }

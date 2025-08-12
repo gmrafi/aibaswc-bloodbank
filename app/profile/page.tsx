@@ -27,10 +27,14 @@ export default function ProfilePage() {
     setMounted(true)
   }, [])
 
+  // Show loading state until mounted to prevent hydration mismatch
   if (!mounted) {
     return (
       <div className="min-h-screen grid place-items-center bg-gray-50 p-4">
-        <div className="h-8 w-32 rounded bg-gray-200 animate-pulse" />
+        <div className="space-y-4">
+          <div className="h-8 w-32 rounded bg-gray-200 animate-pulse" />
+          <div className="h-4 w-48 rounded bg-gray-200 animate-pulse" />
+        </div>
       </div>
     )
   }
@@ -72,8 +76,15 @@ function CampusProfileCard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [data, setData] = useState<CampusProfile>({})
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+    
     let active = true
     ;(async () => {
       try {
@@ -89,7 +100,7 @@ function CampusProfileCard() {
     return () => {
       active = false
     }
-  }, [])
+  }, [mounted])
 
   const syncFromAccount = () => {
     const primaryEmail = user?.primaryEmailAddress?.emailAddress
@@ -119,6 +130,23 @@ function CampusProfileCard() {
     } finally {
       setSaving(false)
     }
+  }
+
+  // Don't render until mounted to prevent hydration issues
+  if (!mounted) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Campus Profile</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <div className="h-4 w-16 rounded bg-gray-200 animate-pulse" />
+            <div className="h-10 rounded bg-gray-200 animate-pulse" />
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
