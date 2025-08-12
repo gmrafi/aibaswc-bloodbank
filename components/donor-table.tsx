@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import type { Donor } from "./blood-context"
 import { useBlood } from "./blood-context"
 import { isEligible } from "@/lib/compatibility"
@@ -24,14 +24,9 @@ export default function DonorTable() {
   const [group, setGroup] = useState<string>("all")
   const [availability, setAvailability] = useState<string>("all")
   const [department, setDepartment] = useState<string>("all")
-  const [mounted, setMounted] = useState(false)
   const { toast } = useToast()
   const { role } = useRole()
   const canDeleteDonors = role === "superadmin"
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const departments = useMemo(() => {
     const set = new Set(state.donors.map((d) => d.department).filter(Boolean))
@@ -39,9 +34,6 @@ export default function DonorTable() {
   }, [state.donors])
 
   const filtered = useMemo(() => {
-    // Don't filter until mounted to prevent hydration mismatch
-    if (!mounted) return []
-    
     return state.donors.filter((d) => {
       const q = query.trim().toLowerCase()
       const matchesQ =
@@ -57,26 +49,10 @@ export default function DonorTable() {
       const matchesDept = department === "all" ? true : d.department === department
       return matchesQ && matchesGroup && matchesAvail && matchesDept
     })
-  }, [state.donors, query, group, availability, department, mounted])
+  }, [state.donors, query, group, availability, department])
 
   const [editing, setEditing] = useState<Donor | null>(null)
   const [editOpen, setEditOpen] = useState(false)
-
-  // Show loading state until mounted
-  if (!mounted) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border bg-white p-4">
-          <div className="h-6 w-32 rounded bg-gray-200 animate-pulse mb-2" />
-          <div className="space-y-3">
-            <div className="h-10 rounded bg-gray-200 animate-pulse" />
-            <div className="h-10 rounded bg-gray-200 animate-pulse" />
-          </div>
-        </div>
-        <div className="h-64 rounded bg-gray-200 animate-pulse" />
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-4">

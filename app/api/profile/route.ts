@@ -16,8 +16,6 @@ export async function GET() {
           phone1: data.phone1 ?? undefined,
           phone2: data.phone2 ?? undefined,
           bloodGroup: data.blood_group ?? undefined,
-          lastDonation: data.last_donation ?? undefined,
-          willing: data.willing ?? true,
         }
       : null,
   )
@@ -35,8 +33,6 @@ export async function PUT(req: Request) {
     phone1: payload.phone1 ?? null,
     phone2: payload.phone2 ?? null,
     blood_group: payload.bloodGroup ?? null,
-    last_donation: payload.lastDonation ?? null,
-    willing: payload.willing ?? true,
     updated_at: new Date().toISOString(),
   }
   const { error } = await supabase.from("profiles").upsert(upsert, { onConflict: "clerk_user_id" })

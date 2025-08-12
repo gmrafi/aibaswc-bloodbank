@@ -7,9 +7,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BLOOD_GROUPS, type BloodGroup } from "@/lib/compatibility"
-import dynamic from "next/dynamic"
-
-const MapboxMap = dynamic(() => import("@/components/mapbox-map"), { ssr: false })
 
 type Props = {
   onSubmit?: (data: {
@@ -20,8 +17,6 @@ type Props = {
     hospital?: string
     ward?: string
     location: string
-    latitude?: number
-    longitude?: number
     contactPerson: string
     contactPhone: string
     contactPhone2?: string
@@ -41,8 +36,6 @@ export default function RequestForm(props: Props) {
   const [hospital, setHospital] = useState("")
   const [ward, setWard] = useState("")
   const [location, setLocation] = useState("")
-  const [latitude, setLatitude] = useState<number | undefined>(undefined)
-  const [longitude, setLongitude] = useState<number | undefined>(undefined)
   const [contactPerson, setContactPerson] = useState("")
   const [contactPhone, setContactPhone] = useState("")
   const [contactPhone2, setContactPhone2] = useState("")
@@ -77,8 +70,6 @@ export default function RequestForm(props: Props) {
             hospital: hospital.trim() || undefined,
             ward: ward.trim() || undefined,
             location: location.trim(),
-            latitude,
-            longitude,
             contactPerson: contactPerson.trim(),
             contactPhone: contactPhone.trim(),
             contactPhone2: contactPhone2.trim() || undefined,
@@ -141,38 +132,10 @@ export default function RequestForm(props: Props) {
       </div>
 
       <div className="grid md:grid-cols-3 gap-3">
-        <div className="grid gap-1.5 md:col-span-2">
+        <div className="grid gap-1.5">
           <Label htmlFor="location">Location</Label>
           <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} required />
-          <div className="text-xs text-muted-foreground">You can optionally pick a point on the map.</div>
         </div>
-        <div className="grid md:grid-cols-2 gap-3">
-          <div className="grid gap-1.5">
-            <Label htmlFor="latitude">Latitude (optional)</Label>
-            <Input id="latitude" value={latitude ?? ""} onChange={(e) => setLatitude(e.target.value ? Number(e.target.value) : undefined)} />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="longitude">Longitude (optional)</Label>
-            <Input id="longitude" value={longitude ?? ""} onChange={(e) => setLongitude(e.target.value ? Number(e.target.value) : undefined)} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-1.5">
-        {/* Mapbox map picker (client only) */}
-        <MapboxMap
-          latitude={latitude}
-          longitude={longitude}
-          onChange={(c) => {
-            setLatitude(c.latitude)
-            setLongitude(c.longitude)
-          }}
-          height={280}
-          zoom={12}
-        />
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-3">
         <div className="grid gap-1.5">
           <Label htmlFor="contactPerson">Contact Person</Label>
           <Input id="contactPerson" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} required />
