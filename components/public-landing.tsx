@@ -112,20 +112,35 @@ export default function PublicLanding() {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-xl font-semibold">Admin access</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Club coordinators can manage donors and requests.</p>
-              <div className="mt-4">
+              <p className="mt-2 text-sm text-muted-foreground">Club coordinators can manage donors and requests, view analytics, and more.</p>
+              <div className="mt-4 flex flex-col gap-2">
                 <Link href="/admin">
                   <Button className="w-full">Open Admin Portal</Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button variant="outline" className="w-full">Register as Admin</Button>
                 </Link>
               </div>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
-                  <span>Protected with Clerk</span>
+                  <span>Protected with Clerk authentication</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
-                  <span>Data stored in Supabase (Postgres)</span>
+                  <span>Data stored securely in Supabase (Postgres)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
+                  <span>View donor and request analytics</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
+                  <span>Export donor lists and request history</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 size-4 text-emerald-600" />
+                  <span>Role-based access for club admins and superadmins</span>
                 </li>
               </ul>
             </CardContent>
@@ -135,7 +150,8 @@ export default function PublicLanding() {
 
       <footer className="border-t py-8 text-center text-xs text-muted-foreground">
         <p>
-          © {new Date().getFullYear()} {CLUB.name}. All rights reserved.
+          © {new Date().getFullYear()} {CLUB.name}. All rights reserved.<br />
+          Design and developed by <span className="font-semibold text-gray-700">Md Golam Mubasshir Rafi</span>
         </p>
       </footer>
     </div>
